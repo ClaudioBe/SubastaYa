@@ -32,6 +32,6 @@ module.exports = (sequelize) => {
             type:DataTypes.STRING
         },
         version:{
-            type:DataTypes.int
+            type:DataTypes.INTEGER
         }       
     })}
