@@ -11,6 +11,20 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull:false
         },
+        vendedor_id:{
+            type:DataTypes.BIGINT,
+            references:{
+                model: 'usuarios',
+                key: 'id'
+            }
+        },
+        categoria_id:{
+            type:DataTypes.BIGINT,
+            references:{
+                model: 'categorias',
+                key: 'id'
+            }
+        },
         descripcion:{
             type:DataTypes.STRING,
             allowNull:false
@@ -40,6 +54,7 @@ module.exports = (sequelize) => {
             allowNull:false
         },
         version:{
+            type:DataTypes.INTEGER
             type:DataTypes.INTEGER,
             allowNull:false
         }       
