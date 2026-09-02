@@ -10,4 +10,8 @@ const listarSubastas=async()=>{
     return subastas;
 }
 
-module.exports={crearSubasta,listarSubastas};
+const obtenerSubastaPorId=async(id)=>{
+    const subasta=await Subasta.findByPk(id);
+    return subasta;
+}   
+module.exports={crearSubasta,listarSubastas,obtenerSubastaPorId};

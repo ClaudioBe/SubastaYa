@@ -29,7 +29,39 @@ let capsEntries = entries.map((entry) => [entry[0][0].toUpperCase() + entry[0].s
 sequelize.models = Object.fromEntries(capsEntries);
 
 //relaciones
+const { Usuario: usuario, Categoria: categoria, Subasta: subasta, Billetera: billetera, Transaccion_ledger: transaccion_ledger, Puja: puja, Auditoria_log: auditoria_log } = sequelize.models;
 
+// Categoria (1) -- (N) Subasta [clasifica]
+categoria.hasMany(subasta, { foreignKey: 'categoria_id', as: 'subastas' });
+subasta.belongsTo(categoria, { foreignKey: 'categoria_id', as: 'categoria' });
+
+// Usuario (1) -- (N) Subasta [publica, como vendedor]
+usuario.hasMany(subasta, { foreignKey: 'vendedor_id', as: 'subastasPublicadas' });
+subasta.belongsTo(usuario, { foreignKey: 'vendedor_id', as: 'vendedor' });
+
+// Usuario (1) -- (1) Billetera [posee]
+usuario.hasOne(billetera, { foreignKey: 'usuario_id', as: 'billetera' });
+billetera.belongsTo(usuario, { foreignKey: 'usuario_id', as: 'usuario' });
+
+// Usuario (1) -- (N) Auditoria_Log [gatilla accion, opcional]
+usuario.hasMany(auditoria_log, { foreignKey: 'usuario_id', as: 'auditorias' });
+auditoria_log.belongsTo(usuario, { foreignKey: 'usuario_id', as: 'usuario' });
+
+// Usuario (1) -- (N) Puja [realiza, como comprador]
+usuario.hasMany(puja, { foreignKey: 'comprador_id', as: 'pujas' });
+puja.belongsTo(usuario, { foreignKey: 'comprador_id', as: 'comprador' });
+
+// Subasta (1) -- (N) Puja [recibe]
+subasta.hasMany(puja, { foreignKey: 'subasta_id', as: 'pujas' });
+puja.belongsTo(subasta, { foreignKey: 'subasta_id', as: 'subasta' });
+
+// Billetera (1) -- (N) Transaccion_Ledger [registra movimientos]
+billetera.hasMany(transaccion_ledger, { foreignKey: 'billetera_id', as: 'movimientos' });
+transaccion_ledger.belongsTo(billetera, { foreignKey: 'billetera_id', as: 'billetera' });
+
+// Subasta (1) -- (N) Transaccion_Ledger [justifica, opcional]
+subasta.hasMany(transaccion_ledger, { foreignKey: 'subasta_id', as: 'transacciones' });
+transaccion_ledger.belongsTo(subasta, { foreignKey: 'subasta_id', as: 'subasta' });
 
 module.exports = {
   ...sequelize.models, // para poder importar los modelos así: const { Product, User } = require('./db.js');

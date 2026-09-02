@@ -19,5 +19,13 @@ subastaRouter.get('/',async(req,res)=>{
         res.status(400).send(error.message)
     }
 })
+subastaRouter.get('/:id',async(req,res)=>{
+    try {
+        const getSubasta = await obtenerSubastaPorId(req.params.id);
+        res.status(200).json(getSubasta);
+    } catch (error) {
+        res.status(400).send(error.message)
+    }
+})
 
 module.exports={subastaRouter}
