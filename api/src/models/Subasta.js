@@ -9,29 +9,38 @@ module.exports = (sequelize) => {
         },
         titulo:{
             type: DataTypes.STRING,
+            allowNull:false
         },
         descripcion:{
             type:DataTypes.STRING,
+            allowNull:false
         },
         url_imagen:{
-            type:DataTypes.STRING
+            type:DataTypes.STRING,
+            allowNull:false
         },
         precio_base:{
-            type:DataTypes.DECIMAL
+            type:DataTypes.DECIMAL,
+            allowNull:false
         },
         incremento_minimo:{
-            type:DataTypes.DECIMAL
+            type:DataTypes.DECIMAL,
+            allowNull:false
         },
         fecha_inicio:{
-            type:DataTypes.DATE
+            type:DataTypes.DATE,
+            allowNull:false
         },
         fecha_fin:{
-            type:DataTypes.DATE
+            type:DataTypes.DATE,
+            allowNull:false
         },
         estado:{
-            type:DataTypes.STRING
+            type:DataTypes.STRING,
+            allowNull:false
         },
         version:{
-            type:DataTypes.int
+            type:DataTypes.INTEGER,
+            allowNull:false
         }       
     })}

@@ -2,33 +2,15 @@ require('dotenv').config();
 const { Sequelize } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
-const pg=require("pg")
 
-const {
-  DB_USER, DB_PASSWORD, DB_HOST,DB_NAME, DB_PORT, DATABASE_URL
-} = process.env;
+const {DB_USER, DB_PASSWORD, DB_HOST,DB_NAME, DB_PORT} = process.env;
 
-if (DATABASE_URL) {
-  // Si existe DATABASE_URL (Producción en Vercel con Neon)
-  sequelize = new Sequelize(DATABASE_URL, {
-    logging: false, 
-    native: false, 
-    dialect:'postgres',
-    dialectModule:pg,
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false // Requerido por Neon para conexiones seguras en la nube
-      }
-    }
-  });
-} else {
-  // Si no existe (Desarrollo local en tu computadora)
-  sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
-    logging: false, 
-    native: false, 
-  });
-}
+// Si no existe (Desarrollo local en tu computadora)
+sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
+  logging: false, 
+  native: false, 
+});
+
 const basename = path.basename(__filename);
 const modelDefiners = [];
 
@@ -52,4 +34,4 @@ sequelize.models = Object.fromEntries(capsEntries);
 module.exports = {
   ...sequelize.models, // para poder importar los modelos así: const { Product, User } = require('./db.js');
   conn: sequelize,     // para importart la conexión { conn } = require('./db.js');
-};
+}
