@@ -54,7 +54,6 @@ module.exports = (sequelize) => {
             allowNull:false
         },
         version:{
-            type:DataTypes.INTEGER
             type:DataTypes.INTEGER,
             allowNull:false
         }       
