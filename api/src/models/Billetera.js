@@ -7,6 +7,13 @@ module.exports = (sequelize) => {
             autoIncrement:true,
             primaryKey:true
         },
+        usuario_id:{
+            type:DataTypes.BIGINT,
+            references:{
+                model: 'usuarios',
+                key: 'id'
+            }
+        },
         saldo_total:{
             type:DataTypes.DECIMAL,
         },

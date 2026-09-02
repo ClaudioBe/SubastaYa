@@ -7,6 +7,13 @@ module.exports = (sequelize) => {
             autoIncrement:true,
             primaryKey:true
         },
+        billetera_id:{
+            type:DataTypes.BIGINT,
+            references:{
+                model: 'billeteras',
+                key: 'id'
+            }
+        },
         tipo:{
             type: DataTypes.STRING,
         },
@@ -15,5 +22,12 @@ module.exports = (sequelize) => {
         },
         fecha:{
             type:DataTypes.DATE
-        }    
+        },
+        subasta_id:{
+            type:DataTypes.BIGINT,
+            references:{
+                model: 'subastas',
+                key: 'id'
+            }
+        }   
     })}

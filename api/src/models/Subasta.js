@@ -10,6 +10,20 @@ module.exports = (sequelize) => {
         titulo:{
             type: DataTypes.STRING,
         },
+        vendedor_id:{
+            type:DataTypes.BIGINT,
+            references:{
+                model: 'usuarios',
+                key: 'id'
+            }
+        },
+        categoria_id:{
+            type:DataTypes.BIGINT,
+            references:{
+                model: 'categorias',
+                key: 'id'
+            }
+        },
         descripcion:{
             type:DataTypes.STRING,
         },
