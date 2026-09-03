@@ -1,5 +1,5 @@
 const {Router}=require('express');
-const {crearSubasta,listarSubastas}=require('../controllers/subastaController')
+const {crearSubasta,listarSubastas,obtenerSubastaPorId}=require('../controllers/subastaController')
 const subastaRouter=Router();
 
 subastaRouter.post('/',async(req,res)=>{
