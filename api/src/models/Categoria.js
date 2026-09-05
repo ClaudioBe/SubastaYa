@@ -12,5 +12,7 @@ module.exports = (sequelize) => {
         },
         url_icono:{
             type:DataTypes.STRING,
-        }   
+        }
+    }, {
+        tableName: 'categorias'
     })}

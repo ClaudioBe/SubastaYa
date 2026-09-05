@@ -19,7 +19,6 @@ module.exports = (sequelize) => {
         },
         entidad_id:{
             type:DataTypes.BIGINT,
-            autoIncrement:true,
         },
         accion:{
             type:DataTypes.STRING,

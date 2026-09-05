@@ -56,5 +56,7 @@ module.exports = (sequelize) => {
         version:{
             type:DataTypes.INTEGER,
             allowNull:false
-        }       
+        }
+    }, {
+        tableName: 'subastas'
     })}
