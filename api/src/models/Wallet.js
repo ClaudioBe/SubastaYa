@@ -1,26 +1,26 @@
 const { DataTypes} = require('sequelize');
 
 module.exports = (sequelize) => {
-    sequelize.define('billetera', {
+    sequelize.define('wallet', {
         id:{
             type:DataTypes.BIGINT,
             autoIncrement:true,
             primaryKey:true
         },
-        usuario_id:{
+        user_id:{
             type:DataTypes.BIGINT,
             references:{
-                model: 'usuarios',
+                model: 'users',
                 key: 'id'
             }
         },
-        saldo_total:{
+        total_balance:{
             type:DataTypes.DECIMAL,
         },
-        saldo_retenido:{
+        withheld_balance:{
             type:DataTypes.DECIMAL,
         },
-        saldo_disponible:{
+        available_balance:{
             type:DataTypes.DECIMAL
         },
         version:{

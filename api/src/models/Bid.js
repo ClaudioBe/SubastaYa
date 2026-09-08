@@ -1,33 +1,30 @@
 const { DataTypes} = require('sequelize');
 
 module.exports = (sequelize) => {
-    sequelize.define('transaccion_ledger', {
+    sequelize.define('bid', {
         id:{
             type:DataTypes.BIGINT,
             autoIncrement:true,
             primaryKey:true
         },
-        billetera_id:{
+        auction_id:{
             type:DataTypes.BIGINT,
             references:{
-                model: 'billeteras',
+                model: 'auctions',
                 key: 'id'
             }
         },
-        tipo:{
-            type: DataTypes.STRING,
-        },
-        monto:{
-            type:DataTypes.DECIMAL,
-        },
-        fecha:{
-            type:DataTypes.DATE
-        },
-        subasta_id:{
+        buyer_id:{
             type:DataTypes.BIGINT,
             references:{
-                model: 'subastas',
+                model: 'users',
                 key: 'id'
             }
-        }   
+        },
+        amount:{
+            type: DataTypes.DECIMAL,
+        },
+        bid_date:{
+            type:DataTypes.DATE,
+        }      
     })}

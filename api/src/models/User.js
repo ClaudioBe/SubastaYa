@@ -1,18 +1,22 @@
 const { DataTypes} = require('sequelize');
 
 module.exports = (sequelize) => {
-    sequelize.define('categoria', {
+    sequelize.define('user', {
         id:{
             type:DataTypes.BIGINT,
             autoIncrement:true,
             primaryKey:true
         },
-        nombre:{
+        email:{
             type: DataTypes.STRING,
         },
-        url_icono:{
+        name:{
             type:DataTypes.STRING,
-        }
-    }, {
-        tableName: 'categorias'
+        },
+        password_hash:{
+            type:DataTypes.STRING
+        },
+        register_date:{
+            type:DataTypes.DATE
+        }   
     })}

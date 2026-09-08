@@ -1,30 +1,32 @@
 const { DataTypes} = require('sequelize');
 
 module.exports = (sequelize) => {
-    sequelize.define('puja', {
+    sequelize.define('audit_log', {
         id:{
             type:DataTypes.BIGINT,
             autoIncrement:true,
             primaryKey:true
         },
-        subasta_id:{
+        user_id:{
             type:DataTypes.BIGINT,
             references:{
-                model: 'subastas',
+                model: 'users',
                 key: 'id'
             }
         },
-        comprador_id:{
+        entity:{
+            type: DataTypes.STRING,
+        },
+        entity_id:{
             type:DataTypes.BIGINT,
-            references:{
-                model: 'usuarios',
-                key: 'id'
-            }
         },
-        monto:{
-            type: DataTypes.DECIMAL,
+        action:{
+            type:DataTypes.STRING,
         },
-        fecha_puja:{
-            type:DataTypes.DATE,
-        }      
+        detail_json:{
+            type:DataTypes.STRING
+        },
+        date:{
+            type:DataTypes.DATE
+        } 
     })}
