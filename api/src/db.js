@@ -29,41 +29,41 @@ let capsEntries = entries.map((entry) => [entry[0][0].toUpperCase() + entry[0].s
 sequelize.models = Object.fromEntries(capsEntries);
 
 //relaciones
-const { Usuario: usuario, Categoria: categoria, Subasta: subasta, Billetera: billetera, Transaccion_ledger: transaccion_ledger, Puja: puja, Auditoria_log: auditoria_log } = sequelize.models;
+const { User, Category, Auction, Wallet, Transaction_ledger, Bid, Audit_log } = sequelize.models;
 
-// Categoria (1) -- (N) Subasta [clasifica]
-categoria.hasMany(subasta, { foreignKey: 'categoria_id', as: 'subastas' });
-subasta.belongsTo(categoria, { foreignKey: 'categoria_id', as: 'categoria' });
+// Categoria (1) -- (N) Auction [clasifica]
+Category.hasMany(Auction, { foreignKey: 'category_id'});
+Auction.belongsTo(Category, { foreignKey: 'category_id' });
 
-// Usuario (1) -- (N) Subasta [publica, como vendedor]
-usuario.hasMany(subasta, { foreignKey: 'vendedor_id', as: 'subastasPublicadas' });
-subasta.belongsTo(usuario, { foreignKey: 'vendedor_id', as: 'vendedor' });
+// User (1) -- (N) Auction [publica, como vendedor]
+User.hasMany(Auction, { foreignKey: 'seller_id' });
+Auction.belongsTo(User, { foreignKey: 'seller_id'});
 
-// Usuario (1) -- (1) Billetera [posee]
-usuario.hasOne(billetera, { foreignKey: 'usuario_id', as: 'billetera' });
-billetera.belongsTo(usuario, { foreignKey: 'usuario_id', as: 'usuario' });
+// User (1) -- (1) Wallet [posee]
+User.hasOne(Wallet, { foreignKey: 'user_id' });
+Wallet.belongsTo(User, { foreignKey: 'user_id' });
 
-// Usuario (1) -- (N) Auditoria_Log [gatilla accion, opcional]
-usuario.hasMany(auditoria_log, { foreignKey: 'usuario_id', as: 'auditorias' });
-auditoria_log.belongsTo(usuario, { foreignKey: 'usuario_id', as: 'usuario' });
+// User (1) -- (N) auditoria_Log [gatilla accion, opcional]
+User.hasMany(Audit_log, { foreignKey: 'user_id'});
+Audit_log.belongsTo(User, { foreignKey: 'user_id' });
 
-// Usuario (1) -- (N) Puja [realiza, como comprador]
-usuario.hasMany(puja, { foreignKey: 'comprador_id', as: 'pujas' });
-puja.belongsTo(usuario, { foreignKey: 'comprador_id', as: 'comprador' });
+// User (1) -- (N) Bid [realiza, como buyer]
+User.hasMany(Bid, { foreignKey: 'buyer_id' });
+Bid.belongsTo(User, { foreignKey: 'buyer_id'});
 
-// Subasta (1) -- (N) Puja [recibe]
-subasta.hasMany(puja, { foreignKey: 'subasta_id', as: 'pujas' });
-puja.belongsTo(subasta, { foreignKey: 'subasta_id', as: 'subasta' });
+// Auction (1) -- (N) Bid [recibe]
+Auction.hasMany(Bid, { foreignKey: 'auction_id'});
+Bid.belongsTo(Auction, { foreignKey: 'auction_id' });
 
-// Billetera (1) -- (N) Transaccion_Ledger [registra movimientos]
-billetera.hasMany(transaccion_ledger, { foreignKey: 'billetera_id', as: 'movimientos' });
-transaccion_ledger.belongsTo(billetera, { foreignKey: 'billetera_id', as: 'billetera' });
+// Wallet (1) -- (N) Transaction_Ledger [registra movimientos]
+Wallet.hasMany(Transaction_ledger, { foreignKey: 'wallet_id' });
+Transaction_ledger.belongsTo(Wallet, { foreignKey: 'wallet_id'});
 
-// Subasta (1) -- (N) Transaccion_Ledger [justifica, opcional]
-subasta.hasMany(transaccion_ledger, { foreignKey: 'subasta_id', as: 'transacciones' });
-transaccion_ledger.belongsTo(subasta, { foreignKey: 'subasta_id', as: 'subasta' });
+// Auction (1) -- (N) Transaction_Ledger [justifica, opcional]
+Auction.hasMany(Transaction_ledger, { foreignKey: 'auction_id'});
+Transaction_ledger.belongsTo(Auction, { foreignKey: 'auction_id' });
 
 module.exports = {
-  ...sequelize.models, // para poder importar los modelos así: const { Product, User } = require('./db.js');
-  conn: sequelize,     // para importart la conexión { conn } = require('./db.js');
+  ...sequelize.models,
+  conn: sequelize,     
 }

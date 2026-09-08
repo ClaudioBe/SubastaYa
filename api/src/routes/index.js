@@ -1,8 +1,8 @@
 const {Router}= require("express")
-const {subastaRouter}=require('./subastaRouter')
-const {billeteraRouter}=require('./billeteraRouter')
+const {auctionsRouter}=require('./auctionsRouter')
+const {walletsRouter}=require('./walletsRouter')
 const router=Router();
-router.use("/subastas",subastaRouter)
-router.use("/billetera",billeteraRouter)
+router.use("/auctions",auctionsRouter)
+router.use("/wallets",walletsRouter)
 
 module.exports=router;

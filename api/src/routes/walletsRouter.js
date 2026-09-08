@@ -1,8 +1,8 @@
 const { Router } = require('express');
-const { consultarSaldo, depositar } = require('../controllers/billeteraController')
-const billeteraRouter = Router();
+const { consultarSaldo, depositar } = require('../controllers/walletsControllers')
+const walletsRouter = Router();
 
-billeteraRouter.get('/balance', async (req, res) => {
+walletsRouter.get('/balance', async (req, res) => {
     try {
         const { usuarioId } = req.query;
         const saldo = await consultarSaldo(usuarioId);
@@ -12,7 +12,7 @@ billeteraRouter.get('/balance', async (req, res) => {
     }
 })
 
-billeteraRouter.post('/deposit', async (req, res) => {
+walletsRouter.post('/deposit', async (req, res) => {
     try {
         const { usuarioId, monto } = req.body;
         const billetera = await depositar(usuarioId, monto);
@@ -22,4 +22,4 @@ billeteraRouter.post('/deposit', async (req, res) => {
     }
 })
 
-module.exports = { billeteraRouter }
+module.exports = { walletsRouter }

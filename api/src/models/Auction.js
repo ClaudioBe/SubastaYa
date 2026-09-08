@@ -1,55 +1,55 @@
 const { DataTypes} = require('sequelize');
 
 module.exports = (sequelize) => {
-    sequelize.define('subasta', {
+    sequelize.define('auction', {
         id:{
             type:DataTypes.BIGINT,
             autoIncrement:true,
             primaryKey:true
         },
-        titulo:{
+        title:{
             type: DataTypes.STRING,
             allowNull:false
         },
-        vendedor_id:{
+        seller_id:{
             type:DataTypes.BIGINT,
             references:{
-                model: 'usuarios',
+                model: 'users',
                 key: 'id'
             }
         },
-        categoria_id:{
+        category_id:{
             type:DataTypes.BIGINT,
             references:{
-                model: 'categorias',
+                model: 'categories',
                 key: 'id'
             }
         },
-        descripcion:{
+        description:{
             type:DataTypes.STRING,
             allowNull:false
         },
-        url_imagen:{
+        url_image:{
             type:DataTypes.STRING,
             allowNull:false
         },
-        precio_base:{
+        base_price:{
             type:DataTypes.DECIMAL,
             allowNull:false
         },
-        incremento_minimo:{
+        min_increase:{
             type:DataTypes.DECIMAL,
             allowNull:false
         },
-        fecha_inicio:{
+        start_date:{
             type:DataTypes.DATE,
             allowNull:false
         },
-        fecha_fin:{
+        end_date:{
             type:DataTypes.DATE,
             allowNull:false
         },
-        estado:{
+        state:{
             type:DataTypes.STRING,
             allowNull:false
         },
@@ -57,6 +57,4 @@ module.exports = (sequelize) => {
             type:DataTypes.INTEGER,
             allowNull:false
         }
-    }, {
-        tableName: 'subastas'
     })}

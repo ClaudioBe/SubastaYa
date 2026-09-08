@@ -1,32 +1,33 @@
 const { DataTypes} = require('sequelize');
 
 module.exports = (sequelize) => {
-    sequelize.define('auditoria_log', {
+    sequelize.define('transaction_ledger', {
         id:{
             type:DataTypes.BIGINT,
             autoIncrement:true,
             primaryKey:true
         },
-        usuario_id:{
+        wallet_id:{
             type:DataTypes.BIGINT,
             references:{
-                model: 'usuarios',
+                model: 'wallets',
                 key: 'id'
             }
         },
-        entidad:{
+        type:{
             type: DataTypes.STRING,
         },
-        entidad_id:{
-            type:DataTypes.BIGINT,
+        amount:{
+            type:DataTypes.DECIMAL,
         },
-        accion:{
-            type:DataTypes.STRING,
-        },
-        detalle_json:{
-            type:DataTypes.STRING
-        },
-        fecha:{
+        date:{
             type:DataTypes.DATE
-        } 
+        },
+        auction_id:{
+            type:DataTypes.BIGINT,
+            references:{
+                model: 'auctions',
+                key: 'id'
+            }
+        }   
     })}
