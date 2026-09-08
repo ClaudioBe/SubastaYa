@@ -6,8 +6,8 @@ const createBid = async (auctionId, buyerId, amount) => {
         //Trae la auction y valida estado
         const auction = await Auction.findByPk(auctionId, { transaction: t });
         if (!auction) throw new Error('subasta no encontrada');
-        if (auction.estado !== 'ACTIVA') throw new Error('La subasta no está activa');
-        if (new Date() > new Date(auction.fecha_fin)) throw new Error('La subasta ya finalizó');
+        if (auction.state !== 'ACTIVA') throw new Error('La subasta no está activa');
+        if (new Date() > new Date(auction.end_date)) throw new Error('La subasta ya finalizó');
 
         //Valida el monto contra la puja más alta actual
         const currentBid = await Bid.findOne({
@@ -76,7 +76,7 @@ const createBid = async (auctionId, buyerId, amount) => {
 
         //Crea la puja
         const newBid = await Bid.create({
-            auction: auctionId,
+            auction_id: auctionId,
             buyer_id: buyerId,
             amount,
             bid_date: new Date()
