@@ -10,9 +10,6 @@ module.exports = (sequelize) => {
         name:{
             type: DataTypes.STRING,
         },
-        icon_url:{
-            type:DataTypes.STRING,
-        }
     }, {
         tableName: 'categories'
     })}
