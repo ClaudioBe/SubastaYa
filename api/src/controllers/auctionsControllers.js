@@ -10,7 +10,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     if(title=="") errors.title="Debe ingresar un título!";
    
     if(description=="") errors.description="Debe ingresar una descripción!";
-    else if(description.length!=5) errors.description="Descripción muy breve!";
+    else if(description.length<5) errors.description="Descripción muy breve!";
     if(category=="") errors.category="Debe ingresar o elegir una categoría!";
 
     if(start_date=="") errors.start_date="Debe elegir una fecha de inicio!";
@@ -38,7 +38,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
         defaults: { name: category }
     })
     
-    const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state, version:1});
+    const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'ACTIVA', version:1});
     return createdAuction;
 }
 
