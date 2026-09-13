@@ -1,4 +1,5 @@
 const {Auction, Category} = require('../db')
+const { Op } = require('sequelize');
 
 //para poder validar si el usuario ingresó una url valida
 const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i;
@@ -41,10 +42,22 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     return createdAuction;
 }
 
-const getAllAuctions=async()=>{
-    const auctions=await Auction.findAll();
-    return auctions;
-}
+const getAllAuctions=async(search)=>{
+
+    const include = [{ model: Category, attributes: ['name'] }];
+
+    if (!search) return await Auction.findAll({ include });
+
+    return await Auction.findAll({
+        include,
+        where: {
+            [Op.or]: [
+                { title: { [Op.iLike]: `%${search}%` } },
+                { '$category.name$': { [Op.iLike]: `%${search}%` } }
+            ]
+        }
+    });
+};
 
 const getAuctionById=async(id)=>{
     const auction=await Auction.findByPk(id);
