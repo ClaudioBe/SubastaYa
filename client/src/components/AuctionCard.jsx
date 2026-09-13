@@ -48,6 +48,7 @@ const AuctionCard = ({ auction }) => {
 
       <div className="card-body text-center">
         <h5 className="card-title text-uppercase">{auction.title}</h5>
+        <div className="text-muted small mb-1">Desde</div>
         <span className="badge bg-secondary rounded-pill fs-6 px-3 py-2">
           $ {auction.base_price}
         </span>

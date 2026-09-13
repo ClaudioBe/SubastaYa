@@ -38,9 +38,9 @@ export default function CreateAuction() {
         try {
             await axios.post('auctions', input)
         } catch (error) {
-            console.log("Error en create: " +JSON.parse(error.data));
-            
-            setErrors(error.data)
+            console.log("Error en create: ", error.response.data);
+
+            setErrors(error.response.data)
         }
         
     }
