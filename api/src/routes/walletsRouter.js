@@ -1,12 +1,12 @@
 const { Router } = require('express');
-const { consultarSaldo, depositar } = require('../controllers/walletsControllers')
+const { checkBalance, deposit } = require('../controllers/walletsControllers')
 const walletsRouter = Router();
 
 walletsRouter.get('/balance', async (req, res) => {
     try {
-        const { usuarioId } = req.query;
-        const saldo = await consultarSaldo(usuarioId);
-        res.status(200).json(saldo);
+        const { userId } = req.query;
+        const balance = await checkBalance(userId);
+        res.status(200).json(balance);
     } catch (error) {
         res.status(400).send(error.message)
     }
@@ -14,9 +14,9 @@ walletsRouter.get('/balance', async (req, res) => {
 
 walletsRouter.post('/deposit', async (req, res) => {
     try {
-        const { usuarioId, monto } = req.body;
-        const billetera = await depositar(usuarioId, monto);
-        res.status(200).json(billetera);
+        const { userId, amount } = req.body;
+        const wallet = await deposit(userId, amount);
+        res.status(200).json(wallet);
     } catch (error) {
         res.status(400).send(error.message)
     }
