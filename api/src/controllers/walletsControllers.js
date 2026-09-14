@@ -1,41 +1,41 @@
-const { conn, Billetera, Transaccion_ledger } = require('../db')
+const { conn, Wallet, Transaction_ledger} = require('../db')
 
-const consultarSaldo = async (usuarioId) => {
-    const billetera = await Billetera.findOne({ where: { usuario_id: usuarioId } });
-    if (!billetera) throw new Error('El usuario no tiene billetera');
+const checkBalance = async (userId) => {
+    const wallet = await Wallet.findOne({ where: { user_id: userId } });
+    if (!wallet) throw new Error('El usuario no tiene billetera');
     return {
-        saldo_total: billetera.saldo_total,
-        saldo_retenido: billetera.saldo_retenido,
-        saldo_disponible: billetera.saldo_disponible
+        total_balance: wallet.total_balance,
+        withheld_balance: wallet.withheld_balance,
+        available_balance: wallet.available_balance
     };
 }
 
-const depositar = async (usuarioId, monto) => {
-    if (Number(monto) <= 0) throw new Error('El monto debe ser mayor a 0');
+const deposit = async (userId, amount) => {
+    if (Number(amount) <= 0) throw new Error('El monto debe ser mayor a 0');
 
     return await conn.transaction(async (t) => {
-        const billetera = await Billetera.findOne({ where: { usuario_id: usuarioId }, transaction: t });
-        if (!billetera) throw new Error('El usuario no tiene billetera');
+        const wallet = await Wallet.findOne({ where: { user_id: userId }, transaction: t });
+        if (!wallet) throw new Error('El usuario no tiene billetera');
 
-        const [afectados] = await Billetera.update(
+        const [affected] = await wallet.update(
             {
-                saldo_total: Number(billetera.saldo_total) + Number(monto),
-                saldo_disponible: Number(billetera.saldo_disponible) + Number(monto),
-                version: billetera.version + 1
+                total_balance: Number(wallet.total_balance) + Number(amount),
+                available_balance: Number(wallet.available_balance) + Number(amount),
+                version: wallet.version + 1
             },
-            { where: { id: billetera.id, version: billetera.version }, transaction: t }
+            { where: { id: wallet.id, version: wallet.version }, transaction: t }
         );
-        if (afectados === 0) throw new Error('Conflicto de concurrencia en la billetera, reintentar');
+        if (affected === 0) throw new Error('Conflicto de concurrencia en la billetera, reintentar');
 
-        await Transaccion_ledger.create({
-            billetera_id: billetera.id,
-            tipo: 'DEPOSITO',
-            monto,
-            fecha: new Date()
+        await Transaction_ledger.create({
+            wallet: wallet.id,
+            type: 'DEPOSITO',
+            amount,
+            date: new Date()
         }, { transaction: t });
 
-        return await Billetera.findByPk(billetera.id, { transaction: t });
+        return await Wallet.findByPk(wallet.id, { transaction: t });
     });
 }
 
-module.exports = { consultarSaldo, depositar };
+module.exports = { checkBalance, deposit };
