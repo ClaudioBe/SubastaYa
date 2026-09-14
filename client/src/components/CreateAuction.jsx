@@ -84,7 +84,7 @@ export default function CreateAuction() {
             <label>Fecha de finalización</label>
             <input  name='end_date' value={input.end_date} type="date" min={today} onChange={handleChange} />
             <p>{errors.end_date}</p>
-            <button type='submit'></button>
+            <button type='submit'>Crear subasta</button>
         </form> 
         </div>
     )
