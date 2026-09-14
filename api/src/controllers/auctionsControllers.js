@@ -2,7 +2,8 @@ const {Auction, Category} = require('../db')
 const { Op } = require('sequelize');
 
 //para poder validar si el usuario ingresó una url valida
-const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i;
+const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)(jpg|jpeg|png|gif|webp)/i;
+
 
 const createAuction= async({title,seller_id, category, description, url_image, base_price, min_increase, start_date, end_date})=>{
     const errors={};

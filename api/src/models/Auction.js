@@ -30,7 +30,7 @@ module.exports = (sequelize) => {
             allowNull:false
         },
         url_image:{
-            type:DataTypes.STRING,
+            type:DataTypes.TEXT,
             allowNull:false
         },
         base_price:{

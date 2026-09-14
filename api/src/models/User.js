@@ -13,10 +13,10 @@ module.exports = (sequelize) => {
         name:{
             type:DataTypes.STRING,
         },
-        password_hash:{
+        password:{
             type:DataTypes.STRING
         },
-        register_date:{
-            type:DataTypes.DATE
-        }   
+        role:{
+            type:DataTypes.STRING
+        }
     })}
