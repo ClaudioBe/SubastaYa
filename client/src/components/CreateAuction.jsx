@@ -1,7 +1,9 @@
 import { useState,useEffect } from 'react'
 import axios from "axios";
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function CreateAuction() {
+    const { user } = useAuth();
     const [errors,setErrors]=useState({})
     const [categories, setCategories] = useState([])
     const today = new Date().toISOString().split('T')[0];
@@ -16,7 +18,7 @@ export default function CreateAuction() {
 
     const [input, setInput]=useState({
         title:"",
-        seller_id:1,
+        seller_id:user?.id,
         category:"",
         description:"",
         url_image:"", 

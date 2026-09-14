@@ -44,8 +44,8 @@ const login =async({email, password})=>{
         errors.email="email o contraseña incorrecto/a"
         throw Error(JSON.stringify(errors)); 
     }
-    const{password:pwd,...publicUser} = user;
-    
+    const{password:pwd,...publicUser} = user.toJSON();
+
     return publicUser;
 }
 

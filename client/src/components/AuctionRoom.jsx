@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import swal from 'sweetalert2';
+import { useAuth } from '../context/AuthContext.jsx';
 import { formatTimeLeft, isEndingToday } from '../utils/time';
 
 const AuctionRoom = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const [auction, setAuction] = useState(null);
   const [timeLeft, setTimeLeft] = useState('00:00:00');
   const [amount, setAmount] = useState('');
-  // TODO: reemplazar por el id del usuario logueado cuando exista sesión real.
-  const [buyerId, setBuyerId] = useState('');
   const [error, setError] = useState('');
 
   const fetchAuction = async () => {
@@ -42,12 +42,12 @@ const AuctionRoom = () => {
   const handleBid = async (e) => {
     e.preventDefault();
     setError('');
-    if (!buyerId) {
-      setError('Debe ingresar su ID de usuario para pujar.');
+    if (!user) {
+      setError('Inicia sesión para pujar.');
       return;
     }
     try {
-      await axios.post(`auctions/${id}/bids`, { buyerId, amount });
+      await axios.post(`auctions/${id}/bids`, { buyerId: user.id, amount });
       setAmount('');
       swal.fire({ title: 'Puja realizada!', icon: 'success', timer: 1000, showConfirmButton: false });
       fetchAuction();
@@ -92,17 +92,13 @@ const AuctionRoom = () => {
             </div>
           </div>
 
-          {!isFinished ? (
+          {isFinished ? (
+            <div className="alert alert-secondary">Esta subasta ya finalizó.</div>
+          ) : !user ? (
+            <div className="alert alert-secondary">Iniciá sesión para poder pujar.</div>
+          ) : (
             <form onSubmit={handleBid} className="border rounded p-3">
-              <div className="mb-2">
-                <label className="form-label">Tu ID de usuario</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={buyerId}
-                  onChange={(e) => setBuyerId(e.target.value)}
-                />
-              </div>
+              <p className="mb-2 text-muted small">Pujando como: <strong>{user.name}</strong></p>
               <div className="mb-2">
                 <label className="form-label">Monto a pujar (mínimo $ {minAmount})</label>
                 <input
@@ -118,8 +114,6 @@ const AuctionRoom = () => {
               {error && <p className="text-danger small">{error}</p>}
               <button type="submit" className="btn btn-dark w-100">Pujar</button>
             </form>
-          ) : (
-            <div className="alert alert-secondary">Esta subasta ya finalizó.</div>
           )}
 
           <div className="mt-4">
