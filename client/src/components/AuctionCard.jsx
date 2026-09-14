@@ -1,18 +1,6 @@
 import { useEffect, useState } from 'react';
-
-const formatTimeLeft = (endDate) => {
-  const diff = new Date(endDate).getTime() - Date.now();
-  if (diff <= 0) return '00:00:00';
-
-  const totalSeconds = Math.floor(diff / 1000);
-  const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-  const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-  const seconds = String(totalSeconds % 60).padStart(2, '0');
-  return `${hours}:${minutes}:${seconds}`;
-};
-
-const isEndingToday = (endDate) =>
-  new Date(endDate).toDateString() === new Date().toDateString();
+import { Link } from 'react-router-dom';
+import { formatTimeLeft, isEndingToday } from '../utils/time';
 
 const AuctionCard = ({ auction }) => {
   const [timeLeft, setTimeLeft] = useState(() => formatTimeLeft(auction.end_date));
@@ -26,7 +14,7 @@ const AuctionCard = ({ auction }) => {
   }, [auction.end_date]);
 
   return (
-    <div className="card h-100 shadow-sm">
+    <Link to={`/subastas/${auction.id}`} className="card h-100 shadow-sm text-decoration-none text-reset">
       <div className="position-relative">
         <img
           src={auction.url_image}
@@ -53,7 +41,7 @@ const AuctionCard = ({ auction }) => {
           $ {auction.base_price}
         </span>
       </div>
-    </div>
+    </Link>
   );
 };
 

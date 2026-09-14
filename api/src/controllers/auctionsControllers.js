@@ -1,4 +1,4 @@
-const {Auction, Category} = require('../db')
+const {Auction, Category, User, Bid} = require('../db')
 const { Op } = require('sequelize');
 
 //para poder validar si el usuario ingresó una url valida
@@ -61,9 +61,16 @@ const getAllAuctions=async(search)=>{
 };
 
 const getAuctionById=async(id)=>{
-    const auction=await Auction.findByPk(id);
+    const auction=await Auction.findByPk(id, {
+        include: [
+            { model: Category, attributes: ['name'] },
+            { model: User, attributes: ['id', 'name'] },
+            { model: Bid, attributes: ['id', 'amount', 'bid_date', 'buyer_id'], include: [{ model: User, attributes: ['id', 'name'] }] }
+        ]
+    });
+    if (!auction) throw new Error('Subasta no encontrada');
     return auction;
-}   
+}
 
 const getAllCategoryNames=async()=>{
     const categories = await Category.findAll({
