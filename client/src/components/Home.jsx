@@ -20,7 +20,7 @@ const Home = () => {
   }, [search]);
 
   return (
-    <div className="container" style={{ maxWidth: 1100, margin: "3rem auto" }}>
+    <div className="container" style={{ maxWidth: 1100, margin: "1.5rem auto 3rem" }}>
       <div className="search-bar" style={{ maxWidth: 600, margin: "0 auto 2rem" }}>
         <svg className="search-bar__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2">
           <circle cx="11" cy="11" r="7" />
