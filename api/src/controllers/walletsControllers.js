@@ -1,7 +1,7 @@
-const { conn, Wallet, Transaction_ledger } = require('../db')
+const { conn, Wallet, Transaction_ledger} = require('../db')
 
-const consultarSaldo = async (usuarioId) => {
-    const wallet = await Wallet.findOne({ where: { user_id: usuarioId } });
+const checkBalance = async (userId) => {
+    const wallet = await Wallet.findOne({ where: { user_id: userId } });
     if (!wallet) throw new Error('El usuario no tiene billetera');
     return {
         total_balance: wallet.total_balance,
@@ -10,27 +10,27 @@ const consultarSaldo = async (usuarioId) => {
     };
 }
 
-const depositar = async (usuarioId, monto) => {
-    if (Number(monto) <= 0) throw new Error('El monto debe ser mayor a 0');
+const deposit = async (userId, amount) => {
+    if (Number(amount) <= 0) throw new Error('El monto debe ser mayor a 0');
 
     return await conn.transaction(async (t) => {
-        const wallet = await Wallet.findOne({ where: { user_id: usuarioId }, transaction: t });
+        const wallet = await Wallet.findOne({ where: { user_id: userId }, transaction: t });
         if (!wallet) throw new Error('El usuario no tiene billetera');
 
-        const [afectados] = await Wallet.update(
+        const [affected] = await wallet.update(
             {
-                total_balance: Number(wallet.total_balance) + Number(monto),
-                available_balance: Number(wallet.available_balance) + Number(monto),
+                total_balance: Number(wallet.total_balance) + Number(amount),
+                available_balance: Number(wallet.available_balance) + Number(amount),
                 version: wallet.version + 1
             },
             { where: { id: wallet.id, version: wallet.version }, transaction: t }
         );
-        if (afectados === 0) throw new Error('Conflicto de concurrencia en la billetera, reintentar');
+        if (affected === 0) throw new Error('Conflicto de concurrencia en la billetera, reintentar');
 
         await Transaction_ledger.create({
-            wallet_id: wallet.id,
+            wallet: wallet.id,
             type: 'DEPOSITO',
-            amount: monto,
+            amount,
             date: new Date()
         }, { transaction: t });
 
@@ -38,4 +38,4 @@ const depositar = async (usuarioId, monto) => {
     });
 }
 
-module.exports = { consultarSaldo, depositar };
+module.exports = { checkBalance, deposit };
