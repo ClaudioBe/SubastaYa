@@ -23,7 +23,8 @@ auctionsRouter.post('/',async(req,res)=>{
 
 auctionsRouter.get('/',async(req,res)=>{
     try {
-        const auctions = await getAllAuctions(req.body);
+        const { search, sellerId } = req.query;
+        const auctions = await getAllAuctions(search, sellerId);
         res.status(200).json(auctions);
     } catch (error) {
         res.status(400).send(error.message)

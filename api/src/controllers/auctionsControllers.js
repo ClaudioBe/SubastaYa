@@ -43,15 +43,18 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     return createdAuction;
 }
 
-const getAllAuctions=async(search)=>{
+const getAllAuctions=async(search, sellerId)=>{
 
-    const include = [{ model: Category, attributes: ['name'] }];
+    const include = [{ model: Category, attributes: ['name'] }, { model: Bid }];
+    const where = {};
+    if (sellerId) where.seller_id = sellerId;
 
-    if (!search) return await Auction.findAll({ include });
+    if (!search) return await Auction.findAll({ include, where });
 
     return await Auction.findAll({
         include,
         where: {
+            ...where,
             [Op.or]: [
                 { title: { [Op.iLike]: `%${search}%` } },
                 { '$category.name$': { [Op.iLike]: `%${search}%` } }

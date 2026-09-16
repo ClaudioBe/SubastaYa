@@ -86,4 +86,40 @@ const createBid = async (auctionId, buyerId, amount) => {
     });
 }
 
-module.exports = { createBid };
+const getBidsByBuyer = async (buyerId) => {
+    const bids = await Bid.findAll({
+        where: { buyer_id: buyerId },
+        include: [{ model: Auction, include: [Bid] }]
+    });
+
+    const auctionsById = new Map();
+    for (const bid of bids) {
+        if (bid.auction && !auctionsById.has(bid.auction.id)) auctionsById.set(bid.auction.id, bid.auction);
+    }
+
+    return [...auctionsById.values()].map(auction => {
+        const allBids = auction.bids;
+        const highestBid = allBids.reduce((max, b) => (Number(b.amount) > Number(max.amount) ? b : max));
+        const myBestAmount = Math.max(
+            ...allBids.filter(b => Number(b.buyer_id) === Number(buyerId)).map(b => Number(b.amount))
+        );
+        const isWinning = Number(highestBid.amount) === myBestAmount;
+        const isFinished = auction.state !== 'ACTIVA' || new Date() > new Date(auction.end_date);
+
+        let status;
+        if (isFinished) status = isWinning ? 'GANADA' : 'PERDIDA';
+        else status = isWinning ? 'GANANDO' : 'SUPERADO';
+
+        return {
+            id: auction.id,
+            title: auction.title,
+            url_image: auction.url_image,
+            end_date: auction.end_date,
+            myBestAmount,
+            highestAmount: Number(highestBid.amount),
+            status
+        };
+    });
+};
+
+module.exports = { createBid, getBidsByBuyer };
