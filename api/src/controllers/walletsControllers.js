@@ -17,7 +17,7 @@ const deposit = async (userId, amount) => {
         const wallet = await Wallet.findOne({ where: { user_id: userId }, transaction: t });
         if (!wallet) throw new Error('El usuario no tiene billetera');
 
-        const [affected] = await wallet.update(
+        const [affected] = await Wallet.update(
             {
                 total_balance: Number(wallet.total_balance) + Number(amount),
                 available_balance: Number(wallet.available_balance) + Number(amount),
