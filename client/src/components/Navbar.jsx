@@ -1,8 +1,10 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useWallet } from '../context/WalletContext.jsx';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { balance, hasWallet } = useWallet();
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-3">
@@ -18,6 +20,11 @@ const Navbar = () => {
           {user ? (
             <>
               <span>Hola, {user.name}</span>
+              {hasWallet && (
+                <Link to="/billetera" className="nav-link">
+                  $ {balance.available_balance}
+                </Link>
+              )}
               <button className="btn btn-outline-dark btn-sm" onClick={logout}>
                 Cerrar sesión
               </button>

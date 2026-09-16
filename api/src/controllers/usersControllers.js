@@ -1,4 +1,4 @@
-const{User} =require("../db")
+const{User, Wallet, conn} =require("../db")
 
 const regexName=/^([A-Za-zÑñÁáÉéÍíÓóÚú]+['\-]{0,1}[A-Za-zÑñÁáÉéÍíÓóÚú]+)(\s+([A-Za-zÑñÁáÉéÍíÓóÚú]+['\-]{0,1}[A-Za-zÑñÁáÉéÍíÓóÚú]+))*$/;
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -22,8 +22,17 @@ const register=async({name,email,password,role})=>{
 
     if(Object.keys(errors).length) throw Error(JSON.stringify(errors));
 
-    const user = await User.create({name,email,password,role})
-   
+    await conn.transaction(async (t) => {
+        const user = await User.create({name,email,password,role}, { transaction: t });
+        await Wallet.create({
+            user_id: user.id,
+            total_balance: 0,
+            withheld_balance: 0,
+            available_balance: 0,
+            version: 0
+        }, { transaction: t });
+    });
+
     return "Usuario creado con éxito";
 
 }
