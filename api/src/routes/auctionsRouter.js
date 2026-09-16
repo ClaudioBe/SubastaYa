@@ -7,9 +7,18 @@ auctionsRouter.post('/',async(req,res)=>{
     try {
         const postAuction = await createAuction(req.body);
         res.status(200).json(postAuction);
+
     } catch (error) {
-        res.status(400).send(error.message)
+        try {
+            // Si el error fue lanzado por tus validaciones manuales (JSON stringificado)
+            return res.status(400).json(JSON.parse(error.message));
+        } catch (parseError) {
+            // Si el error vino de Sequelize/BD (Texto plano: "value too long...")
+            console.error("Error nativo de BD:", error.message);
+            return res.status(400).json({ databaseError: error.message });
     }
+}
+
 })
 
 auctionsRouter.get('/',async(req,res)=>{
