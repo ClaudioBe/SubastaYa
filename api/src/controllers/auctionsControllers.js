@@ -17,7 +17,9 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     if(start_date=="") errors.start_date="Debe elegir una fecha de inicio!";
     else{
         startDate = new Date(`${start_date}T${start_time}:00`);
+        if(startDate<=new Date()) errors.start_date="Debe seleccionar un horario posterior al actual!"
     }
+
     if(end_date=="") errors.end_date="Debe elegir una fecha de finalización!";
 
     if(start_time=="") errors.start_time="Debe elegir un horario de inicio!";
@@ -40,7 +42,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     })
     
    
-    const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'PROXIMA'});
+    const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'PRÓXIMA'});
     return createdAuction;
 }
 
