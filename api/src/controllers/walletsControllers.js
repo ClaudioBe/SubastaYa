@@ -1,4 +1,4 @@
-const { conn, Wallet, Transaction_ledger, Auction} = require('../db')
+const { conn, Wallet, Transaction_ledger, Auction, Audit_log} = require('../db')
 const { emitToUser } = require('../sockets')
 
 const checkBalance = async (userId) => {
@@ -32,6 +32,15 @@ const deposit = async (userId, amount) => {
             wallet_id: wallet.id,
             type: 'DEPOSITO',
             amount,
+            date: new Date()
+        }, { transaction: t });
+
+        await Audit_log.create({
+            user_id: userId,
+            entity: 'wallet',
+            entity_id: wallet.id,
+            action: 'WALLET_CREDIT',
+            detail_json: JSON.stringify({ amount }),
             date: new Date()
         }, { transaction: t });
 
