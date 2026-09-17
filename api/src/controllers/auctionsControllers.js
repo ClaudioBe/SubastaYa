@@ -47,24 +47,60 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     return createdAuction;
 }
 
-const getAllAuctions=async(search, sellerId)=>{
+const getAllAuctions=async({ search, sellerId, category, state, minPrice, maxPrice, sort } = {})=>{
 
     const include = [{ model: Category, attributes: ['name'] }, { model: Bid }];
-    const where = {};
-    if (sellerId) where.seller_id = sellerId;
+    const now = new Date();
+    const and = [];
 
-    if (!search) return await Auction.findAll({ include, where });
+    if (sellerId) and.push({ seller_id: sellerId });
 
-    return await Auction.findAll({
-        include,
-        where: {
-            ...where,
+    if (search) {
+        and.push({
             [Op.or]: [
                 { title: { [Op.iLike]: `%${search}%` } },
                 { '$category.name$': { [Op.iLike]: `%${search}%` } }
             ]
-        }
+        });
+    }
+
+    if (category) and.push({ '$category.name$': category });
+
+    //Estado: no existe un estado "PROXIMA" propio, se deriva de start_date/end_date sobre subastas ACTIVA
+    if (state === 'ACTIVA') {
+        and.push({ state: 'ACTIVA' }, { start_date: { [Op.lte]: now } }, { end_date: { [Op.gt]: now } });
+    } else if (state === 'PROXIMA') {
+        and.push({ state: 'ACTIVA' }, { start_date: { [Op.gt]: now } });
+    } else if (state === 'FINALIZADA') {
+        and.push({
+            [Op.or]: [
+                { state: { [Op.ne]: 'ACTIVA' } },
+                { end_date: { [Op.lte]: now } }
+            ]
+        });
+    }
+
+    const where = and.length ? { [Op.and]: and } : {};
+
+    const auctions = await Auction.findAll({ include, where });
+
+    //Precio actual = puja más alta, o el precio base si todavía no tiene pujas
+    let results = auctions.map(a => {
+        const json = a.toJSON();
+        const highestAmount = json.bids.length ? Math.max(...json.bids.map(b => Number(b.amount))) : null;
+        return { ...json, currentPrice: highestAmount ?? Number(json.base_price) };
     });
+
+    if (minPrice) results = results.filter(a => a.currentPrice >= Number(minPrice));
+    if (maxPrice) results = results.filter(a => a.currentPrice <= Number(maxPrice));
+
+    if (sort === 'time_asc') {
+        results = results.sort((a, b) => new Date(a.end_date) - new Date(b.end_date));
+    } else if (sort === 'bids_desc') {
+        results = results.sort((a, b) => b.currentPrice - a.currentPrice);
+    }
+
+    return results;
 };
 
 const getAuctionById=async(id)=>{

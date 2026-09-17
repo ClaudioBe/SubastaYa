@@ -30,8 +30,8 @@ auctionsRouter.get('/categories',async(req,res)=>{
 
 auctionsRouter.get('/',async(req,res)=>{
     try {
-        const { search, sellerId } = req.query;
-        const auctions = await getAllAuctions(search, sellerId);
+        const { search, sellerId, category, state, minPrice, maxPrice, sort } = req.query;
+        const auctions = await getAllAuctions({ search, sellerId, category, state, minPrice, maxPrice, sort });
         res.status(200).json(auctions);
     } catch (error) {
         res.status(400).send(error.message)
