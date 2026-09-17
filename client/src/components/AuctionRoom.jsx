@@ -28,9 +28,11 @@ const AuctionRoom = () => {
     if (!socket) return;
     socket.emit('auction:join', id);
     socket.on('bid:new', fetchAuction);
+    socket.on('auction:closed', fetchAuction);
     return () => {
       socket.emit('auction:leave', id);
       socket.off('bid:new', fetchAuction);
+      socket.off('auction:closed', fetchAuction);
     };
   }, [socket, id]);
 

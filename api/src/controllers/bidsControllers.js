@@ -64,15 +64,17 @@ const createBid = async (auctionId, buyerId, amount) => {
             }, { transaction: t });
         }
 
-        //Anti-sniping:
-        const minutesRemaining = (new Date(auction.end_date) - new Date()) / 60000;
-        if (minutesRemaining < 5) {
-            const newDate = new Date(Date.now() + 5 * 60000);
-            const [affectedAuction] = await auction.update(
+        //Anti-sniping: si la puja entra dentro de los últimos 60 segundos, extiende el cierre 2 minutos
+        let endDate = auction.end_date;
+        const secondsRemaining = (new Date(auction.end_date) - new Date()) / 1000;
+        if (secondsRemaining <= 60) {
+            const newDate = new Date(Date.now() + 2 * 60000);
+            const [affectedAuction] = await Auction.update(
                 { end_date: newDate, version: auction.version + 1 },
                 { where: { id: auction.id, version: auction.version }, transaction: t }
             );
             if (affectedAuction === 0) throw new Error('Conflicto de concurrencia en la auction, reintentar');
+            endDate = newDate;
         }
 
         //Crea la puja
@@ -83,7 +85,7 @@ const createBid = async (auctionId, buyerId, amount) => {
             bid_date: new Date()
         }, { transaction: t });
 
-        return { bid, previousBuyerId: currentBid?.buyer_id, endDate: auction.end_date };
+        return { bid, previousBuyerId: currentBid?.buyer_id, endDate };
     });
 
     //Notifica en tiempo real, ya con la transacción confirmada
