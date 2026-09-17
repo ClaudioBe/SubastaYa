@@ -1,7 +1,8 @@
 const { conn, Auction, Bid, Wallet, Transaction_ledger } = require('../db')
+const { emitToAuction, emitToUser } = require('../sockets')
 
 const createBid = async (auctionId, buyerId, amount) => {
-    return await conn.transaction(async (t) => {
+    const newBid = await conn.transaction(async (t) => {
 
         //Trae la auction y valida estado
         const auction = await Auction.findByPk(auctionId, { transaction: t });
@@ -75,15 +76,22 @@ const createBid = async (auctionId, buyerId, amount) => {
         }
 
         //Crea la puja
-        const newBid = await Bid.create({
+        const bid = await Bid.create({
             auction_id: auctionId,
             buyer_id: buyerId,
             amount,
             bid_date: new Date()
         }, { transaction: t });
 
-        return newBid;
+        return { bid, previousBuyerId: currentBid?.buyer_id, endDate: auction.end_date };
     });
+
+    //Notifica en tiempo real, ya con la transacción confirmada
+    emitToAuction(auctionId, 'bid:new', { bid: newBid.bid, endDate: newBid.endDate });
+    emitToUser(buyerId, 'wallet:update');
+    if (newBid.previousBuyerId) emitToUser(newBid.previousBuyerId, 'wallet:update');
+
+    return newBid.bid;
 }
 
 const getBidsByBuyer = async (buyerId) => {

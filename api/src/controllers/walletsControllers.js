@@ -1,4 +1,5 @@
 const { conn, Wallet, Transaction_ledger, Auction} = require('../db')
+const { emitToUser } = require('../sockets')
 
 const checkBalance = async (userId) => {
     const wallet = await Wallet.findOne({ where: { user_id: userId } });
@@ -13,7 +14,7 @@ const checkBalance = async (userId) => {
 const deposit = async (userId, amount) => {
     if (Number(amount) <= 0) throw new Error('El monto debe ser mayor a 0');
 
-    return await conn.transaction(async (t) => {
+    const updatedWallet = await conn.transaction(async (t) => {
         const wallet = await Wallet.findOne({ where: { user_id: userId }, transaction: t });
         if (!wallet) throw new Error('El usuario no tiene billetera');
 
@@ -36,6 +37,10 @@ const deposit = async (userId, amount) => {
 
         return await Wallet.findByPk(wallet.id, { transaction: t });
     });
+
+    emitToUser(userId, 'wallet:update');
+
+    return updatedWallet;
 }
 
 const getMovements = async (userId) => {

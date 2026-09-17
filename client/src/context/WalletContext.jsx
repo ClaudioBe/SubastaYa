@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext.jsx';
+import { useSocket } from './SocketContext.jsx';
 
 const WalletContext = createContext(null);
 
@@ -8,6 +9,7 @@ const emptyBalance = { total_balance: 0, withheld_balance: 0, available_balance:
 
 export const WalletProvider = ({ children }) => {
   const { user } = useAuth();
+  const socket = useSocket();
   const [balance, setBalance] = useState(emptyBalance);
   const [loading, setLoading] = useState(false);
   const [hasWallet, setHasWallet] = useState(true);
@@ -34,6 +36,12 @@ export const WalletProvider = ({ children }) => {
   useEffect(() => {
     refreshBalance();
   }, [refreshBalance]);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('wallet:update', refreshBalance);
+    return () => socket.off('wallet:update', refreshBalance);
+  }, [socket, refreshBalance]);
 
   const deposit = async (amount) => {
     const response = await axios.post('wallets/deposit', { userId: user.id, amount });
