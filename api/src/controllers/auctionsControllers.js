@@ -29,9 +29,6 @@ const createAuction= async({title,seller_id, category, description, url_image, b
 
     if(url_image=="") errors.url_image="Debe ingresar una url de imagen!";
     else if(!regexURL.test(url_image)) errors.url_image="Debe ingresar una url!";
-
-    console.log("fecha start: " + startDate);
-    console.log("fecha hoy: " + new Date());
     
     if(Object.keys(errors).length)throw Error (JSON.stringify(errors));
     
@@ -43,7 +40,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     })
     
    
-    const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'ACTIVA', version:1});
+    const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'PROXIMA'});
     return createdAuction;
 }
 
