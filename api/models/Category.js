@@ -9,7 +9,10 @@ module.exports = (sequelize) => {
         },
         name:{
             type: DataTypes.STRING,
+            unique: true,
+            allowNull:false
         },
     }, {
-        tableName: 'categories'
+        tableName: 'categories',
+        timestamps: false
     })}

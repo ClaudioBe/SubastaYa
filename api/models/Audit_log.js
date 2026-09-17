@@ -12,21 +12,27 @@ module.exports = (sequelize) => {
             references:{
                 model: 'users',
                 key: 'id'
-            }
+            },
+            allowNull:false
         },
         entity:{
             type: DataTypes.STRING,
+            allowNull:false
         },
         entity_id:{
             type:DataTypes.BIGINT,
+            allowNull:false
         },
         action:{
             type:DataTypes.STRING,
+            allowNull:false
         },
         detail_json:{
-            type:DataTypes.STRING
+            type:DataTypes.TEXT,
+            allowNull:false
         },
         date:{
-            type:DataTypes.DATE
+            type:DataTypes.DATE,
+            allowNull:false
         } 
-    })}
+    },{timestamps: false})}

@@ -15,10 +15,10 @@ const basename = path.basename(__filename);
 const modelDefiners = [];
 
 // Leemos todos los archivos de la carpeta Models, los requerimos y agregamos al arreglo modelDefiners
-fs.readdirSync(path.join(__dirname, '/models'))
+fs.readdirSync(path.join(__dirname, '../models'))
   .filter((file) => (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js'))
   .forEach((file) => {
-    modelDefiners.push(require(path.join(__dirname, '/models', file)));
+    modelDefiners.push(require(path.join(__dirname, '../models', file)));
   });
 
 // Injectamos la conexion (sequelize) a todos los modelos
@@ -43,7 +43,7 @@ Auction.belongsTo(User, { foreignKey: 'seller_id'});
 User.hasOne(Wallet, { foreignKey: 'user_id' });
 Wallet.belongsTo(User, { foreignKey: 'user_id' });
 
-// User (1) -- (N) auditoria_Log [gatilla accion, opcional]
+// User (1) -- (N) audit_Log [gatilla accion, opcional]
 User.hasMany(Audit_log, { foreignKey: 'user_id'});
 Audit_log.belongsTo(User, { foreignKey: 'user_id' });
 

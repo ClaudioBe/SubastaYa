@@ -12,19 +12,23 @@ module.exports = (sequelize) => {
             references:{
                 model: 'auctions',
                 key: 'id'
-            }
+            },
+            allowNull:false
         },
         buyer_id:{
             type:DataTypes.BIGINT,
             references:{
                 model: 'users',
                 key: 'id'
-            }
+            },
+            allowNull:false
         },
         amount:{
             type: DataTypes.DECIMAL,
+            allowNull:false
         },
         bid_date:{
             type:DataTypes.DATE,
+            allowNull:false
         }      
-    })}
+    },{timestamps: false})}

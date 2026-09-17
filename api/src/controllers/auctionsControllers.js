@@ -32,7 +32,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
 
     console.log("fecha start: " + startDate);
     console.log("fecha hoy: " + new Date());
-    // if(start_date=! new Date())
+    
     if(Object.keys(errors).length)throw Error (JSON.stringify(errors));
     
     const endDate= new Date(`${end_date}T${end_time}:00`);
