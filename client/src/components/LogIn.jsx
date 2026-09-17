@@ -22,7 +22,8 @@ const LogIn=()=> {
         try {
             const response = await axios.post('users/login', input);
             login(response.data);
-            navigate('/');
+            response.data.role==="vendedor" ? navigate("/subasta")
+                                            : navigate('/');
         } catch (error) {
             setErrors(error.response.data);
             swal.fire({ title: `Hay errores!`, icon: 'error', timer: 1000 });
