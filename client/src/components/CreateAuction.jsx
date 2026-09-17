@@ -11,13 +11,14 @@ export default function CreateAuction() {
     const today = new Date().toISOString().split('T')[0];
     const navigate=useNavigate();
     useEffect(() => {
-        if(user?.role!=="vendedor") {
+        if(!user || user?.role!=="vendedor") {
             swal.fire({
-                title:"Debe iniciar sesión como vendedor para crear una puja!",
+                title:user?"No puede crear una subasta siendo cliente!":"Debe iniciar sesión como vendedor para crear una subasta!",
                 icon:"warning"
             })
-            navigate("/iniciarSesion")
-        }
+            navigate(!user?"/iniciarSesion":"/")
+        } 
+        
         const getCategories = async () => {
             const response = await axios.get('auctions/categories'); 
             setCategories(response.data)
