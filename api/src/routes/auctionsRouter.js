@@ -30,8 +30,17 @@ auctionsRouter.get('/categories',async(req,res)=>{
 
 auctionsRouter.get('/',async(req,res)=>{
     try {
-        const auctions = await getAllAuctions(req.body);
+        const { search, sellerId } = req.query;
+        const auctions = await getAllAuctions(search, sellerId);
         res.status(200).json(auctions);
+    } catch (error) {
+        res.status(400).send(error.message)
+    }
+})
+auctionsRouter.get('/categories',async(req,res)=>{
+    try {
+        const categoryNames = await getAllCategoryNames();
+        res.status(200).json(categoryNames);
     } catch (error) {
         res.status(400).send(error.message)
     }

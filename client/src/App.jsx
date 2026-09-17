@@ -7,6 +7,7 @@ import Register from './components/Register.jsx';
 import LogIn from './components/LogIn.jsx';
 import Navbar from './components/Navbar.jsx';
 import Wallet from './components/Wallet.jsx';
+import MyActivity from './components/MyActivity.jsx';
 import axios from 'axios';
 axios.defaults.baseURL='http://localhost:3001/';
 
@@ -21,6 +22,7 @@ function App() {
         <Route  path='/registrarse' element = {<Register/>}/>
         <Route  path='/iniciarSesion' element = {<LogIn/>}/>
         <Route  path='/billetera' element = {<Wallet/>}/>
+        <Route  path='/mis-actividades' element = {<MyActivity/>}/>
       </Routes>
     </>)
 }

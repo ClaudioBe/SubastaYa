@@ -1,4 +1,4 @@
-const { conn, Wallet, Transaction_ledger} = require('../db')
+const { conn, Wallet, Transaction_ledger, Auction} = require('../db')
 
 const checkBalance = async (userId) => {
     const wallet = await Wallet.findOne({ where: { user_id: userId } });
@@ -28,7 +28,7 @@ const deposit = async (userId, amount) => {
         if (affected === 0) throw new Error('Conflicto de concurrencia en la billetera, reintentar');
 
         await Transaction_ledger.create({
-            wallet: wallet.id,
+            wallet_id: wallet.id,
             type: 'DEPOSITO',
             amount,
             date: new Date()
@@ -38,4 +38,15 @@ const deposit = async (userId, amount) => {
     });
 }
 
-module.exports = { checkBalance, deposit };
+const getMovements = async (userId) => {
+    const wallet = await Wallet.findOne({ where: { user_id: userId } });
+    if (!wallet) throw new Error('El usuario no tiene billetera');
+
+    return await Transaction_ledger.findAll({
+        where: { wallet_id: wallet.id },
+        include: [{ model: Auction, attributes: ['title'] }],
+        order: [['date', 'DESC']]
+    });
+};
+
+module.exports = { checkBalance, deposit, getMovements };

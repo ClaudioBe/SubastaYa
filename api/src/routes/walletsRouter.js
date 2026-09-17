@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { checkBalance, deposit } = require('../controllers/walletsControllers')
+const { checkBalance, deposit, getMovements } = require('../controllers/walletsControllers')
 const walletsRouter = Router();
 
 walletsRouter.get('/balance', async (req, res) => {
@@ -17,6 +17,16 @@ walletsRouter.post('/deposit', async (req, res) => {
         const { userId, amount } = req.body;
         const wallet = await deposit(userId, amount);
         res.status(200).json(wallet);
+    } catch (error) {
+        res.status(400).send(error.message)
+    }
+})
+
+walletsRouter.get('/movements', async (req, res) => {
+    try {
+        const { userId } = req.query;
+        const movements = await getMovements(userId);
+        res.status(200).json(movements);
     } catch (error) {
         res.status(400).send(error.message)
     }

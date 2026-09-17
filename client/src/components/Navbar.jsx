@@ -20,6 +20,9 @@ const Navbar = () => {
           {user ? (
             <>
               <span>Hola, {user.name}</span>
+              <Link to="/mis-actividades" className="nav-link">
+                Mis actividades
+              </Link>
               {hasWallet && (
                 <Link to="/billetera" className="nav-link">
                   $ {balance.available_balance}
