@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
-import { useNavigate} from "react-router-dom"
+import { Link, useNavigate} from "react-router-dom"
 import { useAuth } from '../context/AuthContext.jsx'
 import swal from 'sweetalert2'
 
@@ -31,18 +31,20 @@ const LogIn=()=> {
 
     return (
         <div>
-        <h1>Iniciar sesión</h1>
-        <form onSubmit={handleSubmit}>
-            <label>E-mail</label>
-            <input name='email' value={input.email} type="text" onChange={handleChange}  />
-            <p>{errors.email}</p>
-
-            <label>Contraseña</label>
-            <input name='password' value={input.password} type="password" onChange={handleChange} />
-            <p>{errors.password}</p>
-
+            <h1>Iniciar sesión</h1>
+            <form onSubmit={handleSubmit}>
+                <label>E-mail</label>
+                <input name='email' value={input.email} type="email" onChange={handleChange}  />
+                <p>{errors.email}</p>
+                <label>Contraseña</label>
+                <input name='password' value={input.password} type="password" onChange={handleChange} />
+                <p>{errors.password}</p>
             <button type='submit'>Iniciar Sesión</button>
-        </form> 
+            </form> 
+            <div>
+                <p>¿Todavía no tienes una cuenta?</p>
+                <Link className="btn btn-primary" to="/registrarse">¡Registrate!</Link>
+            </div>
         </div>
     )
 }
