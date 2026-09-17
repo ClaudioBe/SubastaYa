@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)(jpg|jpeg|png|gif|webp)/i;
 
 
-const createAuction= async({title,seller_id, category, description, url_image, base_price, min_increase, start_date, end_date})=>{
+const createAuction= async({title,seller_id, category, description, url_image, base_price, min_increase, start_date, start_time, end_date, end_time})=>{
     const errors={};
     let startDate;
     if(title=="") errors.title="Debe ingresar un título!";
@@ -16,10 +16,13 @@ const createAuction= async({title,seller_id, category, description, url_image, b
 
     if(start_date=="") errors.start_date="Debe elegir una fecha de inicio!";
     else{
-        startDate=new Date(start_date);
-        startDate.setDate(startDate.getDate() + 1);
+        startDate = new Date(`${start_date}T${start_time}:00`);
     }
     if(end_date=="") errors.end_date="Debe elegir una fecha de finalización!";
+
+    if(start_time=="") errors.start_time="Debe elegir un horario de inicio!";
+    
+    if(end_time=="") errors.end_time="Debe elegir un horario de finalización!";
 
     if(base_price=="") errors.base_price="Debe ingresar un precio base!";
     if(min_increase=="") errors.min_increase="Debe ingresar un incremento mínimo!";
@@ -32,13 +35,14 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     // if(start_date=! new Date())
     if(Object.keys(errors).length)throw Error (JSON.stringify(errors));
     
-    const endDate=new Date(end_date);
-    endDate.setDate(endDate.getDate() + 1);
+    const endDate= new Date(`${end_date}T${end_time}:00`);
+
     const [categoryData] = await Category.findOrCreate({
         where: { name: category },
         defaults: { name: category }
     })
     
+   
     const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'ACTIVA', version:1});
     return createdAuction;
 }
