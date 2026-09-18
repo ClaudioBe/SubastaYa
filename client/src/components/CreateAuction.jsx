@@ -8,7 +8,7 @@ export default function CreateAuction() {
     const { user } = useAuth();
     const [errors,setErrors]=useState({})
     const [categories, setCategories] = useState([])
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA'); 
     const navigate=useNavigate();
     useEffect(() => {
         if(!user) {

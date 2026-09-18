@@ -44,7 +44,7 @@ module.exports = {
         min_increase: 2000.00,
         start_date: new Date(now.getTime() + 24 * 60 * 60000), // Mañana
         end_date: new Date(now.getTime() + 48 * 60 * 60000),   // Pasado
-        state: 'PROGRAMADA',
+        state: 'PRÓXIMA',
         seller_id: 1,
         category_id: 3, // Indumentaria
         version: 0,

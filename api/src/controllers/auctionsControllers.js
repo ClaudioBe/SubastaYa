@@ -2,7 +2,8 @@ const {Auction, Category, User, Bid} = require('../db')
 const { Op } = require('sequelize');
 
 //para poder validar si el usuario ingresó una url valida
-const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)(jpg|jpeg|png|gif|webp)/i;
+const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i;
+
 
 
 const createAuction= async({title,seller_id, category, description, url_image, base_price, min_increase, start_date, start_time, end_date, end_time})=>{
@@ -17,7 +18,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     if(start_date=="") errors.start_date="Debe elegir una fecha de inicio!";
     else{
         startDate = new Date(`${start_date}T${start_time}:00`);
-        if(startDate<=new Date()) errors.start_date="Debe seleccionar un horario posterior al actual!"
+        if(startDate<=new Date()) errors.start_time_="Debe seleccionar un horario posterior al actual!"
     }
 
     if(end_date=="") errors.end_date="Debe elegir una fecha de finalización!";
@@ -30,7 +31,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     if(min_increase=="") errors.min_increase="Debe ingresar un incremento mínimo!";
 
     if(url_image=="") errors.url_image="Debe ingresar una url de imagen!";
-    else if(!regexURL.test(url_image)) errors.url_image="Debe ingresar una url!";
+    else if(!regexURL.test(url_image)) errors.url_image="Debe ingresar una url válida!";
     
     if(Object.keys(errors).length)throw Error (JSON.stringify(errors));
     

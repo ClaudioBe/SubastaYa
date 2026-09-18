@@ -3,17 +3,20 @@ import axios from 'axios';
 import swal from 'sweetalert2';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useWallet } from '../context/WalletContext.jsx';
+import { useSocket } from '../context/SocketContext.jsx';
 
 const movementTypeInfo = {
   DEPOSITO: { label: 'Depósito', badge: 'bg-success', sign: '+' },
   RETENCION: { label: 'Retención por oferta', badge: 'bg-warning text-dark', sign: '-' },
   LIBERACION: { label: 'Liberación (superado)', badge: 'bg-info text-dark', sign: '+' },
-  DEBITO: { label: 'Débito por subasta ganada', badge: 'bg-danger', sign: '-' }
+  DEBITO: { label: 'Débito por subasta ganada', badge: 'bg-danger', sign: '-' },
+  VENTA: { label: 'Venta de subasta', badge: 'bg-success', sign: '+' }
 };
 
 const Wallet = () => {
   const { user } = useAuth();
   const { balance, loading, hasWallet, deposit } = useWallet();
+  const socket = useSocket();
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -29,6 +32,12 @@ const Wallet = () => {
     if (!hasWallet) return;
     refreshMovements();
   }, [hasWallet, refreshMovements]);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('wallet:update', refreshMovements);
+    return () => socket.off('wallet:update', refreshMovements);
+  }, [socket, refreshMovements]);
 
   if (!user) return <div className="container my-5">Iniciá sesión para ver tu billetera.</div>;
 

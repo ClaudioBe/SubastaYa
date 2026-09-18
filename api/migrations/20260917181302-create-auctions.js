@@ -16,7 +16,6 @@ module.exports = {
       },
       seller_id: {
         type: Sequelize.BIGINT,
-        allowNull: false,
         references: {
           model: 'users', // Tabla física de usuarios
           key: 'id'

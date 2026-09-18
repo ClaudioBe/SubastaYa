@@ -24,8 +24,7 @@ module.exports = (sequelize) => {
             references:{
                 model: 'categories',
                 key: 'id'
-            },
-            allowNull:false
+            }
         },
         description:{
             type:DataTypes.STRING,

@@ -3,11 +3,13 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import swal from 'sweetalert2';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useSocket } from '../context/SocketContext.jsx';
 import { formatTimeLeft, isEndingToday } from '../utils/time';
 
 const AuctionRoom = () => {
   const { id } = useParams();
   const { user } = useAuth();
+  const socket = useSocket();
   const [auction, setAuction] = useState(null);
   const [timeLeft, setTimeLeft] = useState('00:00:00');
   const [amount, setAmount] = useState('');
@@ -20,9 +22,19 @@ const AuctionRoom = () => {
 
   useEffect(() => {
     fetchAuction();
-    const pollId = setInterval(fetchAuction, 4000);
-    return () => clearInterval(pollId);
   }, [id]);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.emit('auction:join', id);
+    socket.on('bid:new', fetchAuction);
+    socket.on('auction:closed', fetchAuction);
+    return () => {
+      socket.emit('auction:leave', id);
+      socket.off('bid:new', fetchAuction);
+      socket.off('auction:closed', fetchAuction);
+    };
+  }, [socket, id]);
 
   useEffect(() => {
     if (!auction) return;
