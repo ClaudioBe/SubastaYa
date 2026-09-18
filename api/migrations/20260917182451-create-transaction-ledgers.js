@@ -32,7 +32,7 @@ module.exports = {
       },
       auction_id: {
         type: Sequelize.BIGINT,
-        allowNull: false,
+        allowNull: true, // null para movimientos no ligados a una subasta (ej. DEPOSITO)
         references: { model: 'auctions', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'

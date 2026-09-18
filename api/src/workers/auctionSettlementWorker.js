@@ -86,6 +86,37 @@ const settleAuction = async (auctionId) => {
     }
 };
 
+//Activa subastas PRÓXIMA cuya start_date ya llegó
+const activateScheduledAuctions = async () => {
+    const dueAuctions = await Auction.findAll({
+        where: { state: 'PRÓXIMA', start_date: { [Op.lte]: new Date() } },
+        attributes: ['id']
+    });
+
+    for (const { id } of dueAuctions) {
+        try {
+            await conn.transaction(async (t) => {
+                const auction = await Auction.findOne({ where: { id, state: 'PRÓXIMA' }, transaction: t });
+                if (!auction) return;
+
+                await auction.update({ state: 'ACTIVA' }, { transaction: t });
+
+                await Audit_log.create({
+                    user_id: null,
+                    entity: 'auction',
+                    entity_id: id,
+                    action: 'AUCTION_ACTIVATED',
+                    detail_json: JSON.stringify({ reason: 'Llegó la fecha de inicio programada' }),
+                    date: new Date()
+                }, { transaction: t });
+            });
+            emitToAuction(id, 'auction:activated', { auctionId: id });
+        } catch (err) {
+            console.error(`[auction-worker] Error activando subasta ${id}:`, err.message);
+        }
+    }
+};
+
 //Busca subastas ACTIVAs cuyo end_date ya pasó y las liquida una por una
 const runAuctionSettlement = async () => {
     const expiredAuctions = await Auction.findAll({
@@ -107,6 +138,7 @@ let intervalHandle = null;
 const startAuctionSettlementWorker = (intervalMs = Number(process.env.AUCTION_WORKER_INTERVAL_MS) || 30000) => {
     if (intervalHandle) return;
     intervalHandle = setInterval(() => {
+        activateScheduledAuctions().catch((err) => console.error('[auction-worker] Error activando subastas:', err.message));
         runAuctionSettlement().catch((err) => console.error('[auction-worker] Error en la corrida:', err.message));
     }, intervalMs);
 };
@@ -116,4 +148,4 @@ const stopAuctionSettlementWorker = () => {
     intervalHandle = null;
 };
 
-module.exports = { runAuctionSettlement, settleAuction, startAuctionSettlementWorker, stopAuctionSettlementWorker };
+module.exports = { runAuctionSettlement, settleAuction, activateScheduledAuctions, startAuctionSettlementWorker, stopAuctionSettlementWorker };

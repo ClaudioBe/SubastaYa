@@ -31,20 +31,38 @@ const LogIn=()=> {
     }
 
     return (
-        <div>
-            <h1>Iniciar sesión</h1>
-            <form onSubmit={handleSubmit}>
-                <label>E-mail</label>
-                <input name='email' value={input.email} type="email" onChange={handleChange}  />
-                <p>{errors.email}</p>
-                <label>Contraseña</label>
-                <input name='password' value={input.password} type="password" onChange={handleChange} />
-                <p>{errors.password}</p>
-            <button type='submit'>Iniciar Sesión</button>
-            </form> 
-            <div>
-                <p>¿Todavía no tienes una cuenta?</p>
-                <Link className="btn btn-primary" to="/registrarse">¡Registrate!</Link>
+        <div className="container my-5 d-flex justify-content-center">
+            <div className="card shadow-sm border-0 p-4" style={{ maxWidth: 420, width: '100%' }}>
+                <h2 className="text-center mb-4 fw-bold">Iniciar sesión</h2>
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold text-secondary">E-mail</label>
+                        <input
+                            name='email'
+                            value={input.email}
+                            type="email"
+                            onChange={handleChange}
+                            className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                        />
+                        <div className="invalid-feedback">{errors.email}</div>
+                    </div>
+                    <div className="mb-4">
+                        <label className="form-label fw-semibold text-secondary">Contraseña</label>
+                        <input
+                            name='password'
+                            value={input.password}
+                            type="password"
+                            onChange={handleChange}
+                            className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                        />
+                        <div className="invalid-feedback">{errors.password}</div>
+                    </div>
+                    <button type='submit' className="btn btn-primary w-100 fw-semibold">Iniciar Sesión</button>
+                </form>
+                <div className="text-center mt-4">
+                    <p className="text-muted small mb-2">¿Todavía no tienes una cuenta?</p>
+                    <Link className="btn btn-outline-dark btn-sm" to="/registrarse">¡Registrate!</Link>
+                </div>
             </div>
         </div>
     )

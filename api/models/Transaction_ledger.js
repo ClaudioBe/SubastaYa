@@ -32,7 +32,6 @@ module.exports = (sequelize) => {
             references:{
                 model: 'auctions',
                 key: 'id'
-            },
-            allowNull:false
-        }   
+            }
+        }
     },{timestamps: false})}

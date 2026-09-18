@@ -29,10 +29,12 @@ const AuctionRoom = () => {
     socket.emit('auction:join', id);
     socket.on('bid:new', fetchAuction);
     socket.on('auction:closed', fetchAuction);
+    socket.on('auction:activated', fetchAuction);
     return () => {
       socket.emit('auction:leave', id);
       socket.off('bid:new', fetchAuction);
       socket.off('auction:closed', fetchAuction);
+      socket.off('auction:activated', fetchAuction);
     };
   }, [socket, id]);
 
@@ -49,7 +51,8 @@ const AuctionRoom = () => {
   const highestBid = bids[0];
   const currentPrice = highestBid ? Number(highestBid.amount) : Number(auction.base_price);
   const minAmount = currentPrice + Number(auction.min_increase);
-  const isFinished = new Date() > new Date(auction.end_date) || auction.state !== 'ACTIVA';
+  const isUpcoming = auction.state === 'PRÓXIMA';
+  const isFinished = !isUpcoming && (new Date() > new Date(auction.end_date) || auction.state !== 'ACTIVA');
 
   const handleBid = async (e) => {
     e.preventDefault();
@@ -77,7 +80,8 @@ const AuctionRoom = () => {
               src={auction.url_image}
               alt={auction.title}
               className="img-fluid rounded shadow-sm"
-              style={{ width: '100%', height: 380, objectFit: 'cover' }}
+              style={{ width: '100%', height: 380, objectFit: 'cover', background: '#f1f0ee' }}
+              onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400?text=SubastaYa'; }}
             />
             {isEndingToday(auction.end_date) && !isFinished && (
               <span className="badge bg-danger position-absolute top-0 end-0 m-2">TERMINA HOY</span>
@@ -94,17 +98,19 @@ const AuctionRoom = () => {
           <div className="d-flex align-items-center gap-3 my-3">
             <div>
               <div className="text-muted small">{highestBid ? 'Puja actual' : 'Precio base'}</div>
-              <div className="fs-3 fw-bold">$ {currentPrice}</div>
+              <div className="fs-3 fw-bold" style={{ color: 'var(--accent-hover)' }}>$ {currentPrice}</div>
             </div>
             <div>
               <div className="text-muted small">Tiempo restante</div>
               <div className={`fs-5 fw-bold ${isFinished ? 'text-danger' : ''}`}>
-                {isFinished ? 'FINALIZADA' : timeLeft}
+                {isUpcoming ? 'PRÓXIMAMENTE' : isFinished ? 'FINALIZADA' : timeLeft}
               </div>
             </div>
           </div>
 
-          {isFinished ? (
+          {isUpcoming ? (
+            <div className="alert alert-secondary">Esta subasta todavía no comenzó. Empieza el {new Date(auction.start_date).toLocaleString()}.</div>
+          ) : isFinished ? (
             <div className="alert alert-secondary">Esta subasta ya finalizó.</div>
           ) : !user ? (
             <div className="alert alert-secondary">Iniciá sesión para poder pujar.</div>

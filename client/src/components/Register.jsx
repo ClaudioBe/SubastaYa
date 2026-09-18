@@ -12,11 +12,11 @@ const Register=()=> {
             role:""
     })
     const navigate = useNavigate()
-        
+
     const handleChange=(e)=>{
         setInput({...input,[e.target.name]:e.target.value})
     }
-    
+
     const handleSubmit=async(e)=>{
         e.preventDefault();
         try {
@@ -25,7 +25,7 @@ const Register=()=> {
             swal.fire({
                     title: `Registro exitoso!`,
                     text: "Ya puedes iniciar sesion!",
-                    icon: 'success'    
+                    icon: 'success'
             });
 
 
@@ -38,39 +38,41 @@ const Register=()=> {
             });
         }
     }
-             
-    return (
-        <form onSubmit={handleSubmit} className="p-4 border rounded bg-light">
-            <h1 className="mb-4">Registrarse</h1>
-            <div className="col-md-4 mb-3">
-                <label className="form-label">Nombre</label>
-                <input name='name' value={input.name} type="text" onChange={handleChange}/>
-                <div className="text-danger small mt-1">{errors.name}</div>
-            </div>
-            <div className="col-md-4 mb-3">
-                <label className="form-label">E-mail</label>
-                <input name='email' value={input.email} type="text" onChange={handleChange} />
-                <div className="text-danger small mt-1">{errors.email}</div>
-            </div>
-            <div className="col-md-4 mb-3">
-                <label className="form-label">Contraseña</label>
-                <input type="password" name="password" value={input.password} onChange={handleChange}/>
-                <div className="text-danger small mt-1">{errors.password}</div>
-            </div>
 
-            <div className="col-md-4 mb-3">
-                <label className="form-label">Rol</label>
-                <select name="role" onChange={handleChange} className="form-select" defaultValue="" >
-                    <option value="" disabled>Seleccione un rol</option>
-                    <option value="cliente">cliente</option>
-                    <option value="vendedor">vendedor</option>
-                </select>
-                <div className="text-danger small mt-1">{errors.role}</div>
+    return (
+        <div className="container my-5 d-flex justify-content-center">
+            <div className="card shadow-sm border-0 p-4" style={{ maxWidth: 420, width: '100%' }}>
+                <h2 className="text-center mb-4 fw-bold">Registrarse</h2>
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold text-secondary">Nombre</label>
+                        <input name='name' value={input.name} type="text" onChange={handleChange} className={`form-control ${errors.name ? 'is-invalid' : ''}`} />
+                        <div className="invalid-feedback">{errors.name}</div>
+                    </div>
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold text-secondary">E-mail</label>
+                        <input name='email' value={input.email} type="text" onChange={handleChange} className={`form-control ${errors.email ? 'is-invalid' : ''}`} />
+                        <div className="invalid-feedback">{errors.email}</div>
+                    </div>
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold text-secondary">Contraseña</label>
+                        <input type="password" name="password" value={input.password} onChange={handleChange} className={`form-control ${errors.password ? 'is-invalid' : ''}`} />
+                        <div className="invalid-feedback">{errors.password}</div>
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="form-label fw-semibold text-secondary">Rol</label>
+                        <select name="role" onChange={handleChange} className="form-select" defaultValue="" >
+                            <option value="" disabled>Seleccione un rol</option>
+                            <option value="cliente">cliente</option>
+                            <option value="vendedor">vendedor</option>
+                        </select>
+                        <div className="text-danger small mt-1">{errors.role}</div>
+                    </div>
+                    <button type='submit' className="btn btn-primary w-100 fw-semibold">Registrarse</button>
+                </form>
             </div>
-            <div className="col-12">
-                <button type='submit' className="btn btn-primary">Registrarse</button>
-            </div>
-        </form> 
+        </div>
     )
 }
 
