@@ -22,9 +22,8 @@ const deposit = async (userId, amount) => {
             {
                 total_balance: Number(wallet.total_balance) + Number(amount),
                 available_balance: Number(wallet.available_balance) + Number(amount),
-                version: wallet.version + 1
             },
-            { where: { id: wallet.id, version: wallet.version }, transaction: t }
+            { where: { id: wallet.id }, transaction: t }
         );
         if (affected === 0) throw new Error('Conflicto de concurrencia en la billetera, reintentar');
 

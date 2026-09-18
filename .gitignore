@@ -33,3 +33,6 @@ jspm_packages/
 
 #ignoro los seeds
 seeds
+
+# Config local de Claude Code (launch.json de preview, etc.)
+.claude/

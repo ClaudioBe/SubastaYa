@@ -12,12 +12,16 @@ const io = new Server(httpServer, {
 });
 initSocket(io);
 
-// Syncing all the models at once.
-conn.sync({alter:true}).then(() => {
-   httpServer.listen(PORT, () => {
-        console.log(`Server listening at ${PORT}`);
-   });
-   startAuctionSettlementWorker();
-});
+conn.authenticate()
+    .then(() => {
+        console.log('Conexión con la base de datos establecida.');
+        httpServer.listen(PORT, () => {
+            console.log(`Server listening at ${PORT}`);
+        });
+        startAuctionSettlementWorker();
+    })
+    .catch((error) => {
+        console.error(`Falló el arranque del servidor: ${error.message}`);
+    });
 
 module.exports=httpServer;

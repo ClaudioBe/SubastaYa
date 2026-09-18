@@ -12,16 +12,20 @@ module.exports = (sequelize) => {
             references:{
                 model: 'wallets',
                 key: 'id'
-            }
+            },
+            allowNull:false
         },
         type:{
             type: DataTypes.STRING,
+            allowNull:false
         },
         amount:{
             type:DataTypes.DECIMAL,
+            allowNull:false
         },
         date:{
-            type:DataTypes.DATE
+            type:DataTypes.DATE,
+            allowNull:false
         },
         auction_id:{
             type:DataTypes.BIGINT,
@@ -29,5 +33,5 @@ module.exports = (sequelize) => {
                 model: 'auctions',
                 key: 'id'
             }
-        }   
-    })}
+        }
+    },{timestamps: false})}

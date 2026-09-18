@@ -29,10 +29,12 @@ const AuctionRoom = () => {
     socket.emit('auction:join', id);
     socket.on('bid:new', fetchAuction);
     socket.on('auction:closed', fetchAuction);
+    socket.on('auction:activated', fetchAuction);
     return () => {
       socket.emit('auction:leave', id);
       socket.off('bid:new', fetchAuction);
       socket.off('auction:closed', fetchAuction);
+      socket.off('auction:activated', fetchAuction);
     };
   }, [socket, id]);
 
@@ -49,7 +51,8 @@ const AuctionRoom = () => {
   const highestBid = bids[0];
   const currentPrice = highestBid ? Number(highestBid.amount) : Number(auction.base_price);
   const minAmount = currentPrice + Number(auction.min_increase);
-  const isFinished = new Date() > new Date(auction.end_date) || auction.state !== 'ACTIVA';
+  const isUpcoming = auction.state === 'PRÓXIMA';
+  const isFinished = !isUpcoming && (new Date() > new Date(auction.end_date) || auction.state !== 'ACTIVA');
 
   const handleBid = async (e) => {
     e.preventDefault();
@@ -100,12 +103,14 @@ const AuctionRoom = () => {
             <div>
               <div className="text-muted small">Tiempo restante</div>
               <div className={`fs-5 fw-bold ${isFinished ? 'text-danger' : ''}`}>
-                {isFinished ? 'FINALIZADA' : timeLeft}
+                {isUpcoming ? 'PRÓXIMAMENTE' : isFinished ? 'FINALIZADA' : timeLeft}
               </div>
             </div>
           </div>
 
-          {isFinished ? (
+          {isUpcoming ? (
+            <div className="alert alert-secondary">Esta subasta todavía no comenzó. Empieza el {new Date(auction.start_date).toLocaleString()}.</div>
+          ) : isFinished ? (
             <div className="alert alert-secondary">Esta subasta ya finalizó.</div>
           ) : !user ? (
             <div className="alert alert-secondary">Iniciá sesión para poder pujar.</div>

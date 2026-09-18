@@ -12,18 +12,24 @@ module.exports = (sequelize) => {
             references:{
                 model: 'users',
                 key: 'id'
-            }
+            },
+            unique: true,
+            allowNull:false
         },
         total_balance:{
             type:DataTypes.DECIMAL,
+            allowNull:false
         },
         withheld_balance:{
             type:DataTypes.DECIMAL,
+            allowNull:false
         },
         available_balance:{
-            type:DataTypes.DECIMAL
-        },
-        version:{
-            type:DataTypes.INTEGER
-        }     
-    })}
+            type:DataTypes.DECIMAL,
+            allowNull:false
+        }    
+    },{
+        version:true,
+        timestamps: false
+    }     
+)}

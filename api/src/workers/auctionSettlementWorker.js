@@ -15,11 +15,10 @@ const settleAuction = async (auctionId) => {
         });
 
         if (!winningBid) {
-            const [affected] = await Auction.update(
-                { state: 'DESIERTA', version: auction.version + 1 },
-                { where: { id: auction.id, version: auction.version }, transaction: t }
+            await auction.update(
+                { state: 'DESIERTA' },
+                { transaction: t }
             );
-            if (affected === 0) return null;
 
             await Audit_log.create({
                 user_id: null,
@@ -39,26 +38,22 @@ const settleAuction = async (auctionId) => {
         const sellerWallet = await Wallet.findOne({ where: { user_id: auction.seller_id }, transaction: t });
 
         //1. Debitar al comprador: la retención pasa a ser un gasto real
-        const [buyerAffected] = await Wallet.update(
+        await buyerWallet.update(
             {
                 total_balance: Number(buyerWallet.total_balance) - amount,
                 withheld_balance: Number(buyerWallet.withheld_balance) - amount,
-                version: buyerWallet.version + 1
             },
-            { where: { id: buyerWallet.id, version: buyerWallet.version }, transaction: t }
+            {transaction: t }
         );
-        if (buyerAffected === 0) throw new Error('Conflicto de concurrencia liquidando la billetera del comprador');
 
         //2. Acreditar al vendedor
-        const [sellerAffected] = await Wallet.update(
+        await sellerWallet.update(
             {
                 total_balance: Number(sellerWallet.total_balance) + amount,
                 available_balance: Number(sellerWallet.available_balance) + amount,
-                version: sellerWallet.version + 1
             },
-            { where: { id: sellerWallet.id, version: sellerWallet.version }, transaction: t }
+            { transaction: t }
         );
-        if (sellerAffected === 0) throw new Error('Conflicto de concurrencia liquidando la billetera del vendedor');
 
         //3. Escribir en el ledger
         await Transaction_ledger.create({
@@ -68,11 +63,7 @@ const settleAuction = async (auctionId) => {
             wallet_id: sellerWallet.id, type: 'VENTA', amount, date: new Date(), auction_id: auction.id
         }, { transaction: t });
 
-        const [auctionAffected] = await Auction.update(
-            { state: 'FINALIZADA', version: auction.version + 1 },
-            { where: { id: auction.id, version: auction.version }, transaction: t }
-        );
-        if (auctionAffected === 0) throw new Error('Conflicto de concurrencia finalizando la subasta');
+        await auction.update({ state: 'FINALIZADA'},{ transaction: t });
 
         await Audit_log.create({
             user_id: winningBid.buyer_id,
@@ -92,6 +83,37 @@ const settleAuction = async (auctionId) => {
     if (result.state === 'FINALIZADA') {
         emitToUser(result.buyerId, 'wallet:update');
         emitToUser(result.sellerId, 'wallet:update');
+    }
+};
+
+//Activa subastas PRÓXIMA cuya start_date ya llegó
+const activateScheduledAuctions = async () => {
+    const dueAuctions = await Auction.findAll({
+        where: { state: 'PRÓXIMA', start_date: { [Op.lte]: new Date() } },
+        attributes: ['id']
+    });
+
+    for (const { id } of dueAuctions) {
+        try {
+            await conn.transaction(async (t) => {
+                const auction = await Auction.findOne({ where: { id, state: 'PRÓXIMA' }, transaction: t });
+                if (!auction) return;
+
+                await auction.update({ state: 'ACTIVA' }, { transaction: t });
+
+                await Audit_log.create({
+                    user_id: null,
+                    entity: 'auction',
+                    entity_id: id,
+                    action: 'AUCTION_ACTIVATED',
+                    detail_json: JSON.stringify({ reason: 'Llegó la fecha de inicio programada' }),
+                    date: new Date()
+                }, { transaction: t });
+            });
+            emitToAuction(id, 'auction:activated', { auctionId: id });
+        } catch (err) {
+            console.error(`[auction-worker] Error activando subasta ${id}:`, err.message);
+        }
     }
 };
 
@@ -116,6 +138,7 @@ let intervalHandle = null;
 const startAuctionSettlementWorker = (intervalMs = Number(process.env.AUCTION_WORKER_INTERVAL_MS) || 30000) => {
     if (intervalHandle) return;
     intervalHandle = setInterval(() => {
+        activateScheduledAuctions().catch((err) => console.error('[auction-worker] Error activando subastas:', err.message));
         runAuctionSettlement().catch((err) => console.error('[auction-worker] Error en la corrida:', err.message));
     }, intervalMs);
 };
@@ -125,4 +148,4 @@ const stopAuctionSettlementWorker = () => {
     intervalHandle = null;
 };
 
-module.exports = { runAuctionSettlement, settleAuction, startAuctionSettlementWorker, stopAuctionSettlementWorker };
+module.exports = { runAuctionSettlement, settleAuction, activateScheduledAuctions, startAuctionSettlementWorker, stopAuctionSettlementWorker };

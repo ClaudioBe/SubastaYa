@@ -2,7 +2,8 @@ const {Auction, Category, User, Bid} = require('../db')
 const { Op } = require('sequelize');
 
 //para poder validar si el usuario ingresó una url valida
-const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)(jpg|jpeg|png|gif|webp)/i;
+const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i;
+
 
 
 const createAuction= async({title,seller_id, category, description, url_image, base_price, min_increase, start_date, start_time, end_date, end_time})=>{
@@ -17,7 +18,9 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     if(start_date=="") errors.start_date="Debe elegir una fecha de inicio!";
     else{
         startDate = new Date(`${start_date}T${start_time}:00`);
+        if(startDate<=new Date()) errors.start_time_="Debe seleccionar un horario posterior al actual!"
     }
+
     if(end_date=="") errors.end_date="Debe elegir una fecha de finalización!";
 
     if(start_time=="") errors.start_time="Debe elegir un horario de inicio!";
@@ -28,11 +31,8 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     if(min_increase=="") errors.min_increase="Debe ingresar un incremento mínimo!";
 
     if(url_image=="") errors.url_image="Debe ingresar una url de imagen!";
-    else if(!regexURL.test(url_image)) errors.url_image="Debe ingresar una url!";
-
-    console.log("fecha start: " + startDate);
-    console.log("fecha hoy: " + new Date());
-    // if(start_date=! new Date())
+    else if(!regexURL.test(url_image)) errors.url_image="Debe ingresar una url válida!";
+    
     if(Object.keys(errors).length)throw Error (JSON.stringify(errors));
     
     const endDate= new Date(`${end_date}T${end_time}:00`);
@@ -43,7 +43,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     })
     
    
-    const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'ACTIVA', version:1});
+    const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'PRÓXIMA'});
     return createdAuction;
 }
 
@@ -66,16 +66,17 @@ const getAllAuctions=async({ search, sellerId, category, state, minPrice, maxPri
 
     if (category) and.push({ '$category.name$': category });
 
-    //Estado: no existe un estado "PROXIMA", se deriva de start_date/end_date sobre subastas ACTIVA
+    //Estado: PRÓXIMA/ACTIVA/FINALIZADA/DESIERTA son estados reales, salvo el caso ACTIVA-vencida-sin-procesar
+    //todavía por el worker (margen de hasta AUCTION_WORKER_INTERVAL_MS), que tratamos como finalizada.
     if (state === 'ACTIVA') {
-        and.push({ state: 'ACTIVA' }, { start_date: { [Op.lte]: now } }, { end_date: { [Op.gt]: now } });
+        and.push({ state: 'ACTIVA' }, { end_date: { [Op.gt]: now } });
     } else if (state === 'PROXIMA') {
-        and.push({ state: 'ACTIVA' }, { start_date: { [Op.gt]: now } });
+        and.push({ state: 'PRÓXIMA' });
     } else if (state === 'FINALIZADA') {
         and.push({
             [Op.or]: [
-                { state: { [Op.ne]: 'ACTIVA' } },
-                { end_date: { [Op.lte]: now } }
+                { state: { [Op.in]: ['FINALIZADA', 'DESIERTA'] } },
+                { state: 'ACTIVA', end_date: { [Op.lte]: now } }
             ]
         });
     }
