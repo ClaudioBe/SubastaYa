@@ -15,7 +15,6 @@ const Navbar = () => {
         </Link>
 
         <div className="d-flex gap-3 align-items-center">
-          <NavLink to="/" end className="nav-link">Inicio</NavLink>
           <NavLink to="/subasta" className="nav-link">Crear subasta</NavLink>
         </div>
 

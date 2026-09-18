@@ -4,14 +4,17 @@ import { formatTimeLeft, isEndingToday } from '../utils/time';
 
 const AuctionCard = ({ auction }) => {
   const [timeLeft, setTimeLeft] = useState(() => formatTimeLeft(auction.end_date));
+  const isUpcoming = auction.state === 'PRÓXIMA';
+  const isFinished = !isUpcoming && (auction.state !== 'ACTIVA' || new Date() > new Date(auction.end_date));
 
   useEffect(() => {
+    if (isUpcoming || isFinished) return;
     const intervalId = setInterval(() => {
       setTimeLeft(formatTimeLeft(auction.end_date));
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [auction.end_date]);
+  }, [auction.end_date, isUpcoming, isFinished]);
 
   return (
     <Link
@@ -27,15 +30,25 @@ const AuctionCard = ({ auction }) => {
           onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x300?text=SubastaYa'; }}
         />
 
-        {isEndingToday(auction.end_date) && (
+        {!isUpcoming && !isFinished && isEndingToday(auction.end_date) && (
           <span className="badge bg-danger position-absolute top-0 end-0 m-2">
             TERMINA HOY
           </span>
         )}
 
-        <span className="badge position-absolute bottom-0 end-0 m-2" style={{ background: 'var(--brand-dark)' }}>
-          {timeLeft}
-        </span>
+        {isUpcoming ? (
+          <span className="badge position-absolute bottom-0 end-0 m-2 bg-info text-dark">
+            PRÓXIMA
+          </span>
+        ) : isFinished ? (
+          <span className="badge position-absolute bottom-0 end-0 m-2 bg-secondary">
+            TERMINADA
+          </span>
+        ) : (
+          <span className="badge position-absolute bottom-0 end-0 m-2" style={{ background: 'var(--brand-dark)' }}>
+            {timeLeft}
+          </span>
+        )}
       </div>
 
       <div className="card-body text-center">
