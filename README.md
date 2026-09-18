@@ -1,99 +1,179 @@
-# SubastaYa - Plataforma de Subastas en Tiempo Real
+# SubastaYa
 
-**SubastaYa** es una plataforma web de comercio electrónico y subastas en tiempo real diseñada para modernizar y asegurar las compras y ventas competitivas en línea. El proyecto está construido bajo una arquitectura sólida que prioriza la confianza económica mediante un sistema de garantía (Escrow) y el juego limpio a través de mecánicas Anti-sniping.
+**SubastaYa** es una plataforma web de subastas en tiempo real: publicación de artículos, pujas competitivas con actualización instantánea vía WebSocket, un sistema de garantía (**escrow**) que retiene el saldo del pujador líder, mecánica **anti-sniping** que extiende el cierre si llega una oferta de último momento, y liquidación automática de subastas vencidas mediante un proceso en segundo plano.
 
----
+## Stack
 
-## 🚀 Requisitos Previos
+- **Backend**: Node.js + Express 5, Sequelize (PostgreSQL), Socket.IO, sequelize-cli para migraciones.
+- **Frontend**: React 19 + Vite, React Router, Axios, Bootstrap 5, Socket.IO client.
 
-Antes de comenzar, asegúrate de tener instalado en tu entorno de desarrollo:
-* **Entorno de ejecución:** [Indicar versión, ej: Node.js v18+, .NET 8, Java 17, etc.]
-* **Base de datos:** [Indicar motor relacional utilizado, ej: PostgreSQL, MySQL, SQL Server]
-* **Gestor de paquetes:** [Indicar, ej: npm, NuGet, Maven, Pip]
+## Requisitos previos
 
----
+- [Node.js](https://nodejs.org/) 18 o superior (probado con 22).
+- [PostgreSQL](https://www.postgresql.org/) 13 o superior, corriendo localmente (o accesible por red).
+- `npm` (viene con Node).
 
-## 🛠️ Instrucciones de Instalación y Despliegue
+## 1. Clonar e instalar dependencias
 
-Sigue estos pasos secuenciales para compilar y ejecutar la aplicación de forma local:
-
-### 1. Clonar el repositorio
 ```bash
-git clone https://github.com[TU_USUARIO_O_ORGANIZACION]/SubastaYa.git
+git clone https://github.com/ClaudioBe/SubastaYa.git
 cd SubastaYa
+
+cd api
+npm install
+
+cd ../client
+npm install
 ```
 
-### 2. Configuración y Ejecución del Backend
-1. Navega al directorio del backend:
-   ```bash
-   cd api
-   ```
-2. Configura las variables de entorno en el archivo correspondiente (`.env` / `appsettings.json` / `application.properties`):
-   ```env
-   DATABASE_URL=tu_cadena_de_conexion
-   PORT=5000
-   ```
-3. Instala las dependencias necesarias:
-   ```bash
-   # Cambiar según el stack tecnológico elegido
-   npm install
-   ```
-4. **Ejecutar Migraciones (Code-First):** Genera el esquema de la base de datos de manera automatizada:
-   ```bash
-   # Dentro de api:
-   npx sequelize-cli db:migrate
-  
-5. **Cargar Datos Semilla (Seed Data):** Inicializa los usuarios de prueba, categorías y casos de prueba obligatorios:
-   ```bash
-   # Dentro de api:
-   npx sequelize-cli db:seed:all
-   ```
-6. Inicia el servidor de desarrollo:
-   ```bash
-   npm run dev
-   ```
+## 2. Configurar las variables de entorno
 
-### 3. Configuración y Ejecución del Frontend
-1. Navega al directorio del frontend:
-   ```bash
-   cd ../client
-   ```
-2. Instala las dependencias del cliente:
-   ```bash
-   npm install
-   ```
-3. Inicia la aplicación web:
-   ```bash
-   npm run dev
-   ```
-4. Accede desde tu navegador a: `http://localhost:3000`
+En `api/`, copiá el archivo de ejemplo y completalo con tus datos de PostgreSQL:
 
----
+```bash
+cd api
+cp .env.example .env
+```
 
-## 🧠 Arquitectura y Decisiones de Diseño
+Editá `api/.env`:
 
-El sistema se ha diseñado siguiendo estándares modernos de desarrollo de software para garantizar un sistema extensible, mantenible y desacoplado:
+```
+PORT=3001
+DB_USER=postgres
+DB_PASSWORD=tu_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=subastaya
+```
 
-* **Estrategia de Concurrencia (Optimistic Locking):** Para mitigar condiciones de carrera durante las pujas concurrentes, se incorporó un campo `version` en la entidad de las Billeteras(Wallets) y Subastas(Auctions). Esto asegura que si dos peticiones intentan modificar un registro simultáneamente, solo la primera prospera y la segunda arroja un conflicto controlado.
-* **Transaccionalidad (ACID):** Las operaciones críticas (como el débito/crédito y retención de saldos) se ejecutan bajo bloques transaccionales atómicos que garantizan un `Rollback` absoluto ante cualquier fallo del sistema.
-* **Procesamiento en Segundo Plano (Worker):** Un servicio en background (`Worker`) monitorea constantemente el estado temporal de las subastas para darlas por finalizadas o desiertas y liquidar los saldos correspondientes de forma automatizada.
-* **Documentación Viva:** La API REST expone de forma nativa su documentación técnica autogenerada mediante **Swagger UI**, accesible en la ruta local `/api-docs`.
+## 3. Levantar la base de datos
 
----
+Creá la base (vacía) con el nombre que pusiste en `DB_NAME`:
 
-## 👥 Datos Semilla para Pruebas (Seed Data)
+```bash
+createdb -U postgres subastaya
+```
 
-Para interactuar con el sistema, se han pre-cargado los siguientes perfiles y escenarios base en el entorno de base de datos:
+(o desde `psql`: `CREATE DATABASE subastaya;`)
 
-### Usuarios y Billeteras
-* **Vendedor (`vendedor@test.com`):** Creador de publicaciones generales. Saldo inicial: `$0`.
-* **Comprador 1 (`comprador1@test.com`):** Postor líder activo. Saldo Total: `$150.000` / Retenido: `$45.000` / Disponible: `$105.000`.
-* **Comprador 2 (`comprador2@test.com`):** Postor habilitado. Saldo Total: `$200.000` / Disponible: `$200.000`.
-* **Sin Fondos (`sinfondos@test.com`):** Cuenta restringida para pruebas de validación. Saldo Total: `$500`.
+## 4. Ejecutar las migraciones
 
-### Casos de Uso de Subastas Incorporados
-1. **Activa estándar:** Finaliza en 20-30 minutos con un historial de 2 pujas previas cargadas (Líder actual: `$45.000`).
-2. **Activa crítica:** Cierra en menos de 2 minutos, idónea para validar los cambios de color del temporizador visual y la extensión del tiempo por la regla Anti-sniping.
-3. **Próxima:** Subasta programada para iniciar en 24 horas (tiene las pujas deshabilitadas preventivamente).
-4. **Vencida con ganador:** Subasta con fecha límite superada y pujas registradas para validar el procesamiento final del Background Worker.
-5. **Vencida desierta:** Subasta finalizada sin ofertas para comprobar el cambio automático a estado `DESIERTA`.
+El esquema de la base se genera **exclusivamente** a partir de las migraciones en `api/migrations/` — no hay ningún `sync()` automático. Desde `api/`:
+
+```bash
+npx sequelize-cli db:migrate
+```
+
+Esto crea todas las tablas (`users`, `categories`, `auctions`, `wallets`, `bids`, `transaction_ledgers`, `audit_logs`) en el orden correcto, respetando las relaciones entre ellas.
+
+Para tener datos de prueba (usuarios, categorías y subastas de ejemplo — ver el detalle en la sección [Datos semilla](#datos-semilla-para-pruebas) más abajo):
+
+```bash
+npx sequelize-cli db:seed:all
+```
+
+## 5. Lanzar la aplicación
+
+Backend (puerto `3001` por defecto, definido en `.env`):
+
+```bash
+cd api
+npm start
+```
+
+Deberías ver:
+
+```
+Conexión con la base de datos establecida.
+Server listening at 3001
+```
+
+El backend levanta junto con el servidor HTTP el socket de WebSocket (tiempo real) y el worker en segundo plano que activa subastas programadas y liquida las vencidas (corre cada 30 segundos por defecto).
+
+En otra terminal, el frontend (puerto `3000`):
+
+```bash
+cd client
+npm run dev
+```
+
+Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
+
+## Comandos útiles
+
+| Comando | Dónde | Qué hace |
+|---|---|---|
+| `npm start` | `api/` | Levanta el backend con recarga automática (nodemon) |
+| `npm run dev` | `client/` | Levanta el frontend en modo desarrollo (Vite) |
+| `npm run build` | `client/` | Compila el frontend para producción |
+| `npx sequelize-cli db:migrate` | `api/` | Aplica las migraciones pendientes |
+| `npx sequelize-cli db:migrate:undo` | `api/` | Revierte la última migración |
+| `npx sequelize-cli db:seed:all` | `api/` | Carga los datos de prueba |
+
+## Arquitectura y decisiones de diseño
+
+- **Concurrencia optimista**: las entidades `Wallet` y `Auction` tienen un campo `version`. Si dos peticiones intentan modificar el mismo registro al mismo tiempo (por ejemplo, dos pujas simultáneas), solo la primera prospera — la segunda encuentra la versión desactualizada y se rechaza de forma controlada, sin corromper datos. Ver la sección [Prueba de concurrencia](#prueba-de-concurrencia-stress-test) para un caso de prueba concreto.
+- **Transaccionalidad**: las operaciones críticas (retención/liberación de saldo, liquidación de subastas) corren dentro de transacciones de Sequelize — si algún paso falla, se revierte todo el conjunto de cambios.
+- **Worker en segundo plano**: un proceso (`api/src/workers/auctionSettlementWorker.js`) corre cada 30 segundos por defecto (ajustable con `AUCTION_WORKER_INTERVAL_MS`) y se encarga de: activar subastas `PRÓXIMA` cuya fecha de inicio ya llegó, y liquidar subastas `ACTIVA` cuya fecha de fin ya pasó (`FINALIZADA` con transferencia de saldo si hubo pujas, o `DESIERTA` si no hubo ninguna).
+- **Auditoría**: cada cambio de estado ejecutado por el worker, cada extensión por anti-sniping y cada puja rechazada quedan registrados en `audit_logs`.
+
+## Datos semilla para pruebas
+
+Al correr `npx sequelize-cli db:seed:all` quedan cargados los siguientes usuarios y subastas (contraseña `12345` para todos):
+
+### Usuarios y billeteras
+
+| Usuario | Rol en las pruebas | Total | Retenido | Disponible |
+|---|---|---|---|---|
+| `vendedor@test.com` | Vendedor de las subastas de ejemplo | $0 | $0 | $0 |
+| `comprador1@test.com` | Postor líder activo | $150.000 | $45.000 | $105.000 |
+| `comprador2@test.com` | Postor habilitado | $200.000 | $0 | $200.000 |
+| `sinfondos@test.com` | Cuenta para probar validación de saldo insuficiente | $500 | $0 | $500 |
+
+### Subastas de ejemplo
+
+1. **Activa estándar** — cierra en ~25 minutos, con 2 pujas previas (líder actual: `comprador1`, $45.000).
+2. **Activa crítica** — cierra en ~30 segundos, para probar la extensión de tiempo por anti-sniping.
+3. **Próxima** — programada para iniciar en 24hs (las pujas deben estar bloqueadas hasta que el worker la active).
+4. **Vencida con ganador** — fecha límite ya superada, con puja registrada, para validar la liquidación del worker.
+5. **Vencida desierta** — finalizada sin ninguna oferta, para comprobar el pase automático a `DESIERTA`.
+
+## Prueba de concurrencia (stress test)
+
+Para demostrar que la retención de saldo usa concurrencia optimista, el backend aplica un lock por fila sobre la subasta: si dos compradores distintos pujan por el mismo monto en el mismo instante, la base de datos solo debe registrar una puja y rechazar la otra.
+
+Con el backend corriendo, guardá esto como `stress-test-concurrencia.sh` y corrélo desde una terminal bash (Git Bash en Windows):
+
+```bash
+#!/bin/bash
+# Prueba de concurrencia optimista: dos compradores DISTINTOS pujan por la misma
+# oferta, por el mismo monto, en el mismo instante. Se espera que la base de
+# datos registre solo una puja y rechace la otra.
+#
+# Requisitos previos: una subasta ACTIVA con un lider (una puja previa). Ajustar
+# AUCTION_ID, BUYER_B y BUYER_C con ids reales de tu base (por ejemplo, con los
+# datos semilla: la subasta 1 ya tiene a comprador1 liderando con $45.000).
+
+AUCTION_ID=1
+BUYER_B=2
+BUYER_C=3
+AMOUNT=50000   # debe superar la puja actual + el incremento minimo
+
+curl -s -w "\n[Comprador B] HTTP %{http_code}\n" -X POST \
+  "http://localhost:3001/auctions/${AUCTION_ID}/bids" \
+  -H "Content-Type: application/json" \
+  -d "{\"buyerId\":\"${BUYER_B}\",\"amount\":${AMOUNT}}" &
+
+curl -s -w "\n[Comprador C] HTTP %{http_code}\n" -X POST \
+  "http://localhost:3001/auctions/${AUCTION_ID}/bids" \
+  -H "Content-Type: application/json" \
+  -d "{\"buyerId\":\"${BUYER_C}\",\"amount\":${AMOUNT}}" &
+
+wait
+```
+
+```bash
+bash stress-test-concurrencia.sh
+```
+
+Resultado esperado: una de las dos respuestas devuelve `HTTP 200` (puja aceptada) y la otra `HTTP 400` (rechazada por validación de monto, porque la primera ya movió el precio) o `HTTP 409` (si el rechazo ocurre específicamente por un conflicto de concurrencia sobre la billetera). Nunca deberían aceptarse las dos.
