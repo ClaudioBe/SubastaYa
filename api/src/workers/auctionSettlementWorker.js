@@ -15,10 +15,7 @@ const settleAuction = async (auctionId) => {
         });
 
         if (!winningBid) {
-            await auction.update(
-                { state: 'DESIERTA' },
-                { transaction: t }
-            );
+            await auction.update({ state: 'DESIERTA' }, { transaction: t });
 
             await Audit_log.create({
                 user_id: null,
@@ -43,7 +40,7 @@ const settleAuction = async (auctionId) => {
                 total_balance: Number(buyerWallet.total_balance) - amount,
                 withheld_balance: Number(buyerWallet.withheld_balance) - amount,
             },
-            {transaction: t }
+            { transaction: t }
         );
 
         //2. Acreditar al vendedor
@@ -63,7 +60,7 @@ const settleAuction = async (auctionId) => {
             wallet_id: sellerWallet.id, type: 'VENTA', amount, date: new Date(), auction_id: auction.id
         }, { transaction: t });
 
-        await auction.update({ state: 'FINALIZADA'},{ transaction: t });
+        await auction.update({ state: 'FINALIZADA' }, { transaction: t });
 
         await Audit_log.create({
             user_id: winningBid.buyer_id,
