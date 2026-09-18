@@ -66,7 +66,7 @@ const getAllAuctions=async({ search, sellerId, category, state, minPrice, maxPri
 
     if (category) and.push({ '$category.name$': category });
 
-    //Estado: no existe un estado "PROXIMA" propio, se deriva de start_date/end_date sobre subastas ACTIVA
+    //Estado: no existe un estado "PROXIMA", se deriva de start_date/end_date sobre subastas ACTIVA
     if (state === 'ACTIVA') {
         and.push({ state: 'ACTIVA' }, { start_date: { [Op.lte]: now } }, { end_date: { [Op.gt]: now } });
     } else if (state === 'PROXIMA') {

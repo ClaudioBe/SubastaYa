@@ -77,7 +77,8 @@ const AuctionRoom = () => {
               src={auction.url_image}
               alt={auction.title}
               className="img-fluid rounded shadow-sm"
-              style={{ width: '100%', height: 380, objectFit: 'cover' }}
+              style={{ width: '100%', height: 380, objectFit: 'cover', background: '#f1f0ee' }}
+              onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400?text=SubastaYa'; }}
             />
             {isEndingToday(auction.end_date) && !isFinished && (
               <span className="badge bg-danger position-absolute top-0 end-0 m-2">TERMINA HOY</span>
@@ -94,7 +95,7 @@ const AuctionRoom = () => {
           <div className="d-flex align-items-center gap-3 my-3">
             <div>
               <div className="text-muted small">{highestBid ? 'Puja actual' : 'Precio base'}</div>
-              <div className="fs-3 fw-bold">$ {currentPrice}</div>
+              <div className="fs-3 fw-bold" style={{ color: 'var(--accent-hover)' }}>$ {currentPrice}</div>
             </div>
             <div>
               <div className="text-muted small">Tiempo restante</div>

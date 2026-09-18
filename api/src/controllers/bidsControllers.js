@@ -5,8 +5,9 @@ const createBid = async (auctionId, buyerId, amount) => {
     try {
         const newBid = await conn.transaction(async (t) => {
 
-            //Trae la auction y valida estado
-            const auction = await Auction.findByPk(auctionId, { transaction: t });
+            //Trae la auction y valida estado. Lock de fila: serializa todas las pujas concurrentes
+            //sobre esta misma subasta, para que "currentBid" nunca se lea con datos obsoletos.
+            const auction = await Auction.findByPk(auctionId, { transaction: t, lock: t.LOCK.UPDATE });
             if (!auction) throw new Error('subasta no encontrada');
             if (auction.state !== 'ACTIVA') throw new Error('La subasta no está activa');
             if (new Date() > new Date(auction.end_date)) throw new Error('La subasta ya finalizó');

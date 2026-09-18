@@ -1,15 +1,18 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useWallet } from '../context/WalletContext.jsx';
+import logo from '../assets/logo.png';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { balance, hasWallet } = useWallet();
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-3">
+    <nav className="navbar navbar-expand-lg navbar-dark mb-4 shadow-sm" style={{ background: 'var(--brand-dark)' }}>
       <div className="container">
-        <Link className="navbar-brand fw-bold" to="/">SubastaYa</Link>
+        <Link className="navbar-brand d-flex align-items-center" to="/">
+          <img src={logo} alt="SubastaYa" height="52" />
+        </Link>
 
         <div className="d-flex gap-3 align-items-center">
           <NavLink to="/" end className="nav-link">Inicio</NavLink>
@@ -19,23 +22,29 @@ const Navbar = () => {
         <div className="d-flex gap-3 align-items-center ms-auto">
           {user ? (
             <>
-              <span>Hola, {user.name}</span>
+              <span className="text-white-50 d-none d-md-inline">Hola, {user.name}</span>
               <Link to="/mis-actividades" className="nav-link">
                 Mis actividades
               </Link>
               {hasWallet && (
-                <Link to="/billetera" className="nav-link">
+                <Link
+                  to="/billetera"
+                  className="btn btn-sm fw-semibold"
+                  style={{ background: 'var(--accent-soft)', color: 'var(--accent-hover)' }}
+                >
                   $ {balance.available_balance}
                 </Link>
               )}
-              <button className="btn btn-outline-dark btn-sm" onClick={logout}>
+              <button className="btn btn-outline-light btn-sm" onClick={logout}>
                 Cerrar sesión
               </button>
             </>
           ) : (
             <>
-              <Link to="/iniciarSesion">Iniciar sesión</Link>
-              <Link to="/registrarse">Registrarse</Link>
+              <Link to="/iniciarSesion" className="nav-link">Iniciar sesión</Link>
+              <Link to="/registrarse" className="btn btn-sm" style={{ background: 'var(--accent)', color: '#fff' }}>
+                Registrarse
+              </Link>
             </>
           )}
         </div>

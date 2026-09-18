@@ -14,13 +14,17 @@ const AuctionCard = ({ auction }) => {
   }, [auction.end_date]);
 
   return (
-    <Link to={`/subastas/${auction.id}`} className="card h-100 shadow-sm text-decoration-none text-reset">
+    <Link
+      to={`/subastas/${auction.id}`}
+      className="card h-100 shadow-sm text-decoration-none text-reset auction-card"
+    >
       <div className="position-relative">
         <img
           src={auction.url_image}
           className="card-img-top"
           alt={auction.title}
-          style={{ height: 200, objectFit: 'cover' }}
+          style={{ height: 200, objectFit: 'cover', background: '#f1f0ee' }}
+          onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x300?text=SubastaYa'; }}
         />
 
         {isEndingToday(auction.end_date) && (
@@ -29,15 +33,18 @@ const AuctionCard = ({ auction }) => {
           </span>
         )}
 
-        <span className="badge bg-dark position-absolute bottom-0 end-0 m-2">
+        <span className="badge position-absolute bottom-0 end-0 m-2" style={{ background: 'var(--brand-dark)' }}>
           {timeLeft}
         </span>
       </div>
 
       <div className="card-body text-center">
-        <h5 className="card-title text-uppercase">{auction.title}</h5>
+        <h5 className="card-title text-uppercase fs-6">{auction.title}</h5>
         <div className="text-muted small mb-1">{auction.bids?.length ? 'Puja actual' : 'Desde'}</div>
-        <span className="badge bg-secondary rounded-pill fs-6 px-3 py-2">
+        <span
+          className="badge rounded-pill fs-6 px-3 py-2 fw-semibold"
+          style={{ background: 'var(--accent-soft)', color: 'var(--accent-hover)' }}
+        >
           $ {auction.currentPrice ?? auction.base_price}
         </span>
       </div>

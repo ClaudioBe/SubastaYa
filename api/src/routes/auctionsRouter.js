@@ -59,7 +59,9 @@ auctionsRouter.post('/:id/bids',async(req,res)=>{
         const bid = await createBid(req.params.id, buyerId, amount);
         res.status(200).json(bid);
     } catch (error) {
-        res.status(400).send(error.message)
+        //409 para conflictos de concurrencia optimista (lock de billetera), 400 para el resto de validaciones
+        const status = error.message.includes('Conflicto de concurrencia') ? 409 : 400;
+        res.status(status).send(error.message)
     }
 })
 module.exports={auctionsRouter}

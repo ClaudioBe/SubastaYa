@@ -34,3 +34,18 @@
 .search-bar__input::placeholder {
   color: #888;
 }
+
+.auction-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auction-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(23, 25, 35, 0.12) !important;
+}
+
+.auction-card .card-img-top {
+  border-radius: 0;
+}
