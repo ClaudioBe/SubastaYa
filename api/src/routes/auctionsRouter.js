@@ -15,8 +15,8 @@ auctionsRouter.post('/',async(req,res)=>{
             // Si el error vino de Sequelize/BD (Texto plano: "value too long...")
             console.error("Error nativo de BD:", error.message);
             return res.status(400).json({ databaseError: error.message });
+        }   
     }
-}
 })
 
 auctionsRouter.get('/categories',async(req,res)=>{

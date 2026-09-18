@@ -8,15 +8,15 @@ export default function CreateAuction() {
     const { user } = useAuth();
     const [errors,setErrors]=useState({})
     const [categories, setCategories] = useState([])
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA'); 
     const navigate=useNavigate();
     useEffect(() => {
-        if(!user || user?.role!=="vendedor") {
+        if(!user) {
             swal.fire({
-                title:user?"No puede crear una subasta siendo cliente!":"Debe iniciar sesión como vendedor para crear una subasta!",
+                title:"Debe iniciar sesión para crear una subasta!",
                 icon:"warning"
             })
-            navigate(!user?"/iniciarSesion":"/")
+            navigate("/iniciarSesion")
         } 
         
         const getCategories = async () => {

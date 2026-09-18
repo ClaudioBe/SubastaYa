@@ -5,11 +5,16 @@ const createBid = async (auctionId, buyerId, amount) => {
     try {
         const newBid = await conn.transaction(async (t) => {
 
-            //Trae la auction y valida estado
-            const auction = await Auction.findByPk(auctionId, { transaction: t });
-            if (!auction) throw new Error('subasta no encontrada');
-            if (auction.state !== 'ACTIVA') throw new Error('La subasta no está activa');
-            if (new Date() > new Date(auction.end_date)) throw new Error('La subasta ya finalizó');
+        //Trae la auction y valida estado
+        const auction = await Auction.findByPk(auctionId, { transaction: t });
+        if (!auction) throw new Error('subasta no encontrada');
+        if (auction.state !== 'ACTIVA') throw new Error('La subasta no está activa');
+
+        if (auction.seller_id === buyerId) {
+            throw new Error('Un vendedor no puede realizar ofertas en su propia subasta');
+        }
+        
+        if (new Date() > new Date(auction.end_date)) throw new Error('La subasta ya finalizó');
 
             //Valida el monto contra la puja más alta actual
             const currentBid = await Bid.findOne({
@@ -20,20 +25,18 @@ const createBid = async (auctionId, buyerId, amount) => {
             const minAmount = (currentBid ? Number(currentBid.amount) : Number(auction.base_price)) + Number(auction.min_increase);
             if (Number(amount) < minAmount) throw new Error(`El monto debe ser al menos ${minAmount}`);
 
-            //Valida y retenie saldo del nuevo postor
-            const wallet = await Wallet.findOne({ where: { user_id: buyerId }, transaction: t });
-            if (!wallet || Number(wallet.available_balance) < Number(amount)) {
-                throw new Error('Saldo insuficiente');
-            }
-            const [affectedWallet] = await Wallet.update(
-                {
-                    available_balance: Number(wallet.available_balance) - Number(amount),
-                    withheld_balance: Number(wallet.withheld_balance) + Number(amount),
-                    version: wallet.version + 1
-                },
-                { where: { id: wallet.id, version: wallet.version }, transaction: t }
-            );
-            if (affectedWallet === 0) throw new Error('Conflicto de concurrencia en la billetera, reintentar');
+        //Valida y retenie saldo del nuevo postor
+        const wallet = await Wallet.findOne({ where: { user_id: buyerId }, transaction: t });
+        if (!wallet || Number(wallet.available_balance) < Number(amount)) {
+            throw new Error('Saldo insuficiente');
+        }
+        await wallet.update(
+            {
+                available_balance: Number(wallet.available_balance) - Number(amount),
+                withheld_balance: Number(wallet.withheld_balance) + Number(amount),
+            },
+            {transaction: t }
+        );
 
             await Transaction_ledger.create({
                 wallet_id: wallet.id,
@@ -43,18 +46,17 @@ const createBid = async (auctionId, buyerId, amount) => {
                 auction_id: auctionId
             }, { transaction: t });
 
-            //Libera la retención del postor anterior (si había)
-            if (currentBid) {
-                const previousWallet = await Wallet.findOne({ where: { user_id: currentBid.buyer_id }, transaction: t });
-                const [previousAffected] = await Wallet.update(
-                    {
-                        available_balance: Number(previousWallet.available_balance) + Number(currentBid.amount),
-                        withheld_balance: Number(previousWallet.withheld_balance) - Number(currentBid.amount),
-                        version: previousWallet.version + 1
-                    },
-                    { where: { id: previousWallet.id, version: previousWallet.version }, transaction: t }
-                );
-                if (previousAffected === 0) throw new Error('Conflicto de concurrencia liberando billetera anterior');
+        //Libera la retención del postor anterior (si había)
+        if (currentBid) {
+            const previousWallet = await Wallet.findOne({ where: { user_id: currentBid.buyer_id }, transaction: t });
+            if(previousWallet){
+                await previousWallet.update(
+                {
+                    available_balance: Number(previousWallet.available_balance) + Number(currentBid.amount),
+                    withheld_balance: Number(previousWallet.withheld_balance) - Number(currentBid.amount)
+                },
+                {transaction: t });
+            
 
                 await Transaction_ledger.create({
                     wallet_id: previousWallet.id,
@@ -64,18 +66,19 @@ const createBid = async (auctionId, buyerId, amount) => {
                     auction_id: auctionId
                 }, { transaction: t });
             }
+        }
 
-            //Anti-sniping: si la puja entra dentro de los últimos 60 segundos, extiende el cierre 2 minutos
+        //Anti-sniping: si la puja entra dentro de los últimos 60 segundos, extiende el cierre 2 minutos
             let endDate = auction.end_date;
             const secondsRemaining = (new Date(auction.end_date) - new Date()) / 1000;
             if (secondsRemaining <= 60) {
                 const previousEndDate = auction.end_date;
                 const newDate = new Date(Date.now() + 2 * 60000);
-                const [affectedAuction] = await Auction.update(
-                    { end_date: newDate, version: auction.version + 1 },
-                    { where: { id: auction.id, version: auction.version }, transaction: t }
+                await Auction.update(
+                    { end_date: newDate },
+                    {transaction: t }
                 );
-                if (affectedAuction === 0) throw new Error('Conflicto de concurrencia en la auction, reintentar');
+            
                 endDate = newDate;
 
                 await Audit_log.create({
