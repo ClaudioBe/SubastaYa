@@ -9,7 +9,6 @@ const Register=()=> {
             name:"",
             email:"",
             password:"",
-            role:""
     })
     const navigate = useNavigate()
 
@@ -58,16 +57,6 @@ const Register=()=> {
                         <label className="form-label fw-semibold text-secondary">Contraseña</label>
                         <input type="password" name="password" value={input.password} onChange={handleChange} className={`form-control ${errors.password ? 'is-invalid' : ''}`} />
                         <div className="invalid-feedback">{errors.password}</div>
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="form-label fw-semibold text-secondary">Rol</label>
-                        <select name="role" onChange={handleChange} className="form-select" defaultValue="" >
-                            <option value="" disabled>Seleccione un rol</option>
-                            <option value="cliente">cliente</option>
-                            <option value="vendedor">vendedor</option>
-                        </select>
-                        <div className="text-danger small mt-1">{errors.role}</div>
                     </div>
                     <button type='submit' className="btn btn-primary w-100 fw-semibold">Registrarse</button>
                 </form>
