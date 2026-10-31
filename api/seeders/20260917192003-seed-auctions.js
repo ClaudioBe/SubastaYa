@@ -90,7 +90,7 @@ module.exports = {
 
     // puja de la subasta 4 vencida con ganador para que el worker la liquide al comprador 2
     await queryInterface.bulkInsert('bids', [
-      { id: 3, auction_id: 4, buyer_id: 3, amount: 45000.00, bid_date: new Date(now.getTime() - 30 * 60000),}
+      { id: 3, auction_id: 4, buyer_id: 2, amount: 45000.00, bid_date: new Date(now.getTime() - 30 * 60000),}
     ], {});
   },
 
