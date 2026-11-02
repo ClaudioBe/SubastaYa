@@ -67,7 +67,7 @@ const AuctionRoom = () => {
       swal.fire({ title: 'Puja realizada!', icon: 'success', timer: 1000, showConfirmButton: false });
       fetchAuction();
     } catch (err) {
-      setError(err.response?.data || 'No se pudo realizar la puja.');
+      setError(err.response?.data?.message || 'No se pudo realizar la puja.');
     }
   };
 

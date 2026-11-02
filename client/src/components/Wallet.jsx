@@ -62,7 +62,7 @@ const Wallet = () => {
       swal.fire({ title: 'Depósito realizado!', icon: 'success', timer: 1000, showConfirmButton: false });
       refreshMovements();
     } catch (err) {
-      setError(err.response?.data || 'No se pudo realizar el depósito.');
+      setError(err.response?.data?.message || 'No se pudo realizar el depósito.');
     } finally {
       setSubmitting(false);
     }

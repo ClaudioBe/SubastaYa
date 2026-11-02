@@ -1,5 +1,6 @@
 const {Auction, Category, User, Bid} = require('../db')
 const { Op } = require('sequelize');
+const { ValidationError, NotFoundError } = require('../utils/errors');
 
 //para poder validar si el usuario ingresó una url valida
 const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i;
@@ -42,7 +43,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
         else if(endDate<=startDate) errors.end_date="La fecha de finalización debe ser posterior a la de inicio!";
     }
 
-    if(Object.keys(errors).length)throw Error (JSON.stringify(errors));
+    if(Object.keys(errors).length) throw new ValidationError(errors);
 
     const [categoryData] = await Category.findOrCreate({
         where: { name: category },
@@ -119,7 +120,7 @@ const getAuctionById=async(id)=>{
             { model: Bid, attributes: ['id', 'amount', 'bid_date', 'buyer_id'], include: [{ model: User, attributes: ['id', 'name'] }] }
         ]
     });
-    if (!auction) throw new Error('Subasta no encontrada');
+    if (!auction) throw new NotFoundError('Subasta no encontrada', 'AUCTION_NOT_FOUND');
     return auction;
 }
 

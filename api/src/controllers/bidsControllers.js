@@ -1,5 +1,6 @@
 const { conn, Auction, Bid, Wallet, Transaction_ledger, Audit_log } = require('../db')
 const { emitToAuction, emitToUser } = require('../sockets')
+const { NotFoundError, BusinessError } = require('../utils/errors')
 
 const createBid = async (auctionId, buyerId, amount) => {
     try {
@@ -8,14 +9,14 @@ const createBid = async (auctionId, buyerId, amount) => {
             //Trae la auction y valida estado. Lock de fila: serializa todas las pujas concurrentes
             //sobre esta misma subasta, para que "currentBid" nunca se lea con datos obsoletos.
             const auction = await Auction.findByPk(auctionId, { transaction: t, lock: t.LOCK.UPDATE });
-            if (!auction) throw new Error('subasta no encontrada');
-            if (auction.state !== 'ACTIVA') throw new Error('La subasta no está activa');
+            if (!auction) throw new NotFoundError('Subasta no encontrada', 'AUCTION_NOT_FOUND');
+            if (auction.state !== 'ACTIVA') throw new BusinessError('La subasta no está activa', 'AUCTION_NOT_ACTIVE');
 
             if (auction.seller_id === buyerId) {
-                throw new Error('Un vendedor no puede realizar ofertas en su propia subasta');
+                throw new BusinessError('Un vendedor no puede realizar ofertas en su propia subasta', 'SELLER_CANNOT_BID');
             }
 
-            if (new Date() > new Date(auction.end_date)) throw new Error('La subasta ya finalizó');
+            if (new Date() > new Date(auction.end_date)) throw new BusinessError('La subasta ya finalizó', 'AUCTION_ENDED');
 
             //Valida el monto contra la puja más alta actual
             const currentBid = await Bid.findOne({
@@ -24,12 +25,12 @@ const createBid = async (auctionId, buyerId, amount) => {
                 transaction: t
             });
             const minAmount = (currentBid ? Number(currentBid.amount) : Number(auction.base_price)) + Number(auction.min_increase);
-            if (Number(amount) < minAmount) throw new Error(`El monto debe ser al menos ${minAmount}`);
+            if (Number(amount) < minAmount) throw new BusinessError(`El monto debe ser al menos ${minAmount}`, 'BID_TOO_LOW');
 
             //Valida y retiene saldo del nuevo postor
             const wallet = await Wallet.findOne({ where: { user_id: buyerId }, transaction: t });
             if (!wallet || Number(wallet.available_balance) < Number(amount)) {
-                throw new Error('Saldo insuficiente');
+                throw new BusinessError('Saldo insuficiente', 'INSUFFICIENT_FUNDS');
             }
             await wallet.update(
                 {
