@@ -34,6 +34,23 @@ const settleAuction = async (auctionId) => {
         const buyerWallet = await Wallet.findOne({ where: { user_id: winningBid.buyer_id }, transaction: t });
         const sellerWallet = await Wallet.findOne({ where: { user_id: auction.seller_id }, transaction: t });
 
+        const withheldBalance = Number(buyerWallet.withheld_balance);
+        const totalBalance = Number(buyerWallet.total_balance);
+        
+        if (withheldBalance < amount) {
+            throw new Error(
+                `Fondos retenidos insuficientes para liquidar la subasta ${auctionId}. ` +
+                `Retenido: ${withheldBalance}, requerido: ${amount}`
+            );
+        }
+
+        if (totalBalance < amount) {
+            throw new Error(
+                `Saldo total insuficiente para liquidar la subasta ${auctionId}. ` +
+                `Saldo: ${totalBalance}, requerido: ${amount}`
+            );
+        }
+
         //1. Debitar al comprador: la retención pasa a ser un gasto real
         await buyerWallet.update(
             {
