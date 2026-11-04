@@ -18,7 +18,7 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     if(start_date=="") errors.start_date="Debe elegir una fecha de inicio!";
     else{
         startDate = new Date(`${start_date}T${start_time}:00`);
-        if(startDate<=new Date()) errors.start_time_="Debe seleccionar un horario posterior al actual!"
+        if(startDate<=new Date()) errors.start_time="Debe seleccionar un horario posterior al actual!"
     }
 
     if(end_date=="") errors.end_date="Debe elegir una fecha de finalización!";
@@ -27,15 +27,22 @@ const createAuction= async({title,seller_id, category, description, url_image, b
     
     if(end_time=="") errors.end_time="Debe elegir un horario de finalización!";
 
-    if(base_price=="") errors.base_price="Debe ingresar un precio base!";
-    if(min_increase=="") errors.min_increase="Debe ingresar un incremento mínimo!";
+    if(base_price===""||base_price==null) errors.base_price="Debe ingresar un precio base!";
+    else if(!(Number(base_price)>0)) errors.base_price="El precio base debe ser mayor a 0!";
+    if(min_increase===""||min_increase==null) errors.min_increase="Debe ingresar un incremento mínimo!";
+    else if(!(Number(min_increase)>0)) errors.min_increase="El incremento mínimo debe ser mayor a 0!";
 
     if(url_image=="") errors.url_image="Debe ingresar una url de imagen!";
     else if(!regexURL.test(url_image)) errors.url_image="Debe ingresar una url válida!";
     
-    if(Object.keys(errors).length)throw Error (JSON.stringify(errors));
-    
+    //la fecha de fin debe ser posterior a la de inicio (solo si ambas fechas son válidas)
     const endDate= new Date(`${end_date}T${end_time}:00`);
+    if(end_date!==""&&end_time!==""&&!errors.start_date&&!errors.start_time){
+        if(isNaN(endDate.getTime())||isNaN(startDate?.getTime())) errors.end_date="Fecha u horario inválido!";
+        else if(endDate<=startDate) errors.end_date="La fecha de finalización debe ser posterior a la de inicio!";
+    }
+
+    if(Object.keys(errors).length)throw Error (JSON.stringify(errors));
 
     const [categoryData] = await Category.findOrCreate({
         where: { name: category },
