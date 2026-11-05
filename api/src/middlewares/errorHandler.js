@@ -24,12 +24,11 @@ const errorHandler = (err, req, res, next) => {
     if (err.name === 'SequelizeUniqueConstraintError') {
         return res.status(409).json({ error: 'CONFLICT', message: 'El registro ya existe' });
     }
-    if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeDatabaseError') {
-        console.error('Error de base de datos:', err.message);
-        return res.status(400).json({ error: 'DATABASE_ERROR', message: err.message });
+    if (err.name === 'SequelizeValidationError') {
+        return res.status(400).json({ error: 'VALIDATION_ERROR', message: err.message });
     }
 
-    //Cualquier otra cosa es un error inesperado: no se filtra el detalle al cliente
+    //Cualquier otra cosa (incluidos los errores de SQL/conexión) es un error inesperado: no se filtra el detalle al cliente
     console.error('Error no controlado:', err);
     res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Error interno del servidor' });
 };
