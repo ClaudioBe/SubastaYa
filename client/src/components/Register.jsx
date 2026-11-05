@@ -29,7 +29,7 @@ const Register=()=> {
 
 
         } catch (error) {
-            setErrors(error.response.data);
+            setErrors(error.response?.data?.fields || {});
             swal.fire({
                     title: `Hay errores!`,
                     icon: 'error',

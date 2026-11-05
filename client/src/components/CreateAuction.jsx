@@ -81,7 +81,7 @@ export default function CreateAuction() {
             setErrors({})
             swal.fire({ title: `Subasta creada con éxito!`, icon: 'success', timer: 1000 });
         } catch (error) {
-            setErrors(error.response.data)
+            setErrors(error.response?.data?.fields || {})
             swal.fire({ title: `Hay errores!`, icon: 'error', timer: 1000 });
         }  
     }

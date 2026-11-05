@@ -1,6 +1,7 @@
 const express = require('express');
 const routes= require('./routes/index.js');
 const morgan=require('morgan');
+const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler.js');
 const server = express();
 
 //para poder convertir los datos de las peticiones a json 
@@ -21,6 +22,10 @@ server.use((req, res, next) => {
 });
 
 server.use('/', routes);
+
+//siempre al final: rutas inexistentes y manejo centralizado de errores
+server.use(notFoundHandler);
+server.use(errorHandler);
 
 
 module.exports= server;

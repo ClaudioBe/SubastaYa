@@ -1,9 +1,10 @@
 const { conn, Wallet, Transaction_ledger, Auction, Audit_log} = require('../db')
 const { emitToUser } = require('../sockets')
+const { ValidationError, NotFoundError, ConflictError } = require('../utils/errors')
 
 const checkBalance = async (userId) => {
     const wallet = await Wallet.findOne({ where: { user_id: userId } });
-    if (!wallet) throw new Error('El usuario no tiene billetera');
+    if (!wallet) throw new NotFoundError('El usuario no tiene billetera', 'WALLET_NOT_FOUND');
     return {
         total_balance: wallet.total_balance,
         withheld_balance: wallet.withheld_balance,
@@ -12,11 +13,11 @@ const checkBalance = async (userId) => {
 }
 
 const deposit = async (userId, amount) => {
-    if (Number(amount) <= 0) throw new Error('El monto debe ser mayor a 0');
+    if (!(Number(amount) > 0)) throw new ValidationError({ amount: 'El monto debe ser mayor a 0' });
 
     const updatedWallet = await conn.transaction(async (t) => {
         const wallet = await Wallet.findOne({ where: { user_id: userId }, transaction: t });
-        if (!wallet) throw new Error('El usuario no tiene billetera');
+        if (!wallet) throw new NotFoundError('El usuario no tiene billetera', 'WALLET_NOT_FOUND');
 
         const [affected] = await Wallet.update(
             {
@@ -25,7 +26,7 @@ const deposit = async (userId, amount) => {
             },
             { where: { id: wallet.id }, transaction: t }
         );
-        if (affected === 0) throw new Error('Conflicto de concurrencia en la billetera, reintentar');
+        if (affected === 0) throw new ConflictError('Conflicto de concurrencia en la billetera, reintentar', 'WALLET_CONCURRENCY_CONFLICT');
 
         await Transaction_ledger.create({
             wallet_id: wallet.id,
@@ -53,7 +54,7 @@ const deposit = async (userId, amount) => {
 
 const getMovements = async (userId) => {
     const wallet = await Wallet.findOne({ where: { user_id: userId } });
-    if (!wallet) throw new Error('El usuario no tiene billetera');
+    if (!wallet) throw new NotFoundError('El usuario no tiene billetera', 'WALLET_NOT_FOUND');
 
     return await Transaction_ledger.findAll({
         where: { wallet_id: wallet.id },

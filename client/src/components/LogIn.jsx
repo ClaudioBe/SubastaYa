@@ -25,7 +25,7 @@ const LogIn=()=> {
             response.data.role==="vendedor" ? navigate("/subasta")
                                             : navigate('/');
         } catch (error) {
-            setErrors(error.response.data);
+            setErrors(error.response?.data?.fields || {});
             swal.fire({ title: `Hay errores!`, icon: 'error', timer: 1000 });
         }
     }
