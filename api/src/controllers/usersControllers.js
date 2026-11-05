@@ -1,62 +1,20 @@
-const{User, Wallet, conn} =require("../db")
-const{AppError, ValidationError} =require("../utils/errors")
+const usersService = require('../services/usersService');
+const bidsService = require('../services/bidsService');
+const { toUserDto, toUserBidDto } = require('../dtos');
 
-const regexName=/^([A-Za-zÑñÁáÉéÍíÓóÚú]+['\-]{0,1}[A-Za-zÑñÁáÉéÍíÓóÚú]+)(\s+([A-Za-zÑñÁáÉéÍíÓóÚú]+['\-]{0,1}[A-Za-zÑñÁáÉéÍíÓóÚú]+))*$/;
-const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const register = async (req, res) => {
+    const message = await usersService.register(req.body);
+    res.status(201).send(message);
+};
 
-const register=async({name,email,password,role})=>{
-    const errors={}
-    
-    if(name=="") errors.name="Debe ingresar su nombre!";
-    else if(name.length<2) errors.name="nombre muy corto!";
-    else if(!regexName.test(name)) errors.name = "Debe ingresar un nombre válido!"
+const login = async (req, res) => {
+    const user = await usersService.login(req.body);
+    res.status(200).json(toUserDto(user));
+};
 
-    if(email=="") errors.email="Debe ingresar su email!";
-    else if(!emailRegex.test(email)) errors.email="Debe ingresar un email válido!"
+const listBids = async (req, res) => {
+    const bids = await bidsService.getBidsByBuyer(req.params.id);
+    res.status(200).json(bids.map(toUserBidDto));
+};
 
-    if(role=="") errors.role="Debe seleccionar un rol!";
-
-    if(password=="") errors.password="Debe ingresar una contraseña!";
-    else if(password.length<5) errors.password="Contraseña muy corta!";
-    else if(password.length>20) errors.password="Contraseña muy larga!";
-    else if(password.includes(" ")) errors.password="La contraseña no debe contener espacios!"
-
-    if(Object.keys(errors).length) throw new ValidationError(errors);
-
-    await conn.transaction(async (t) => {
-        const user = await User.create({name,email,password,role}, { transaction: t });
-        await Wallet.create({
-            user_id: user.id,
-            total_balance: 0,
-            withheld_balance: 0,
-            available_balance: 0,
-            version: 0
-        }, { transaction: t });
-    });
-
-    return "Usuario creado con éxito";
-
-}
-
-const login =async({email, password})=>{
-    const errors={}
-    
-    if(email=="") errors.email="Debe ingresar su email!";
-    else if(!emailRegex.test(email)) errors.email="Debe ingresar un email válido!"
-
-    if(password=="") errors.password="Debe ingresar una contraseña!";
-    
-    if(Object.keys(errors).length) throw new ValidationError(errors)
-
-    const user=await User.findOne({where:{email}})
-    if(!user||user.password!=password) {
-        errors.password="email o contraseña incorrecto/a"
-        errors.email="email o contraseña incorrecto/a"
-        throw new AppError(401, 'INVALID_CREDENTIALS', 'email o contraseña incorrecto/a', errors);
-    }
-    const{password:pwd,...publicUser} = user.toJSON();
-
-    return publicUser;
-}
-
-module.exports={login,register}
+module.exports = { register, login, listBids };

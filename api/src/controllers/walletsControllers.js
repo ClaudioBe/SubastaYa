@@ -1,66 +1,20 @@
-const { conn, Wallet, Transaction_ledger, Auction, Audit_log} = require('../db')
-const { emitToUser } = require('../sockets')
-const { ValidationError, NotFoundError, ConflictError } = require('../utils/errors')
+const walletsService = require('../services/walletsService');
+const { toBalanceDto, toWalletDto, toMovementDto } = require('../dtos');
 
-const checkBalance = async (userId) => {
-    const wallet = await Wallet.findOne({ where: { user_id: userId } });
-    if (!wallet) throw new NotFoundError('El usuario no tiene billetera', 'WALLET_NOT_FOUND');
-    return {
-        total_balance: wallet.total_balance,
-        withheld_balance: wallet.withheld_balance,
-        available_balance: wallet.available_balance
-    };
-}
-
-const deposit = async (userId, amount) => {
-    if (!(Number(amount) > 0)) throw new ValidationError({ amount: 'El monto debe ser mayor a 0' });
-
-    const updatedWallet = await conn.transaction(async (t) => {
-        const wallet = await Wallet.findOne({ where: { user_id: userId }, transaction: t });
-        if (!wallet) throw new NotFoundError('El usuario no tiene billetera', 'WALLET_NOT_FOUND');
-
-        const [affected] = await Wallet.update(
-            {
-                total_balance: Number(wallet.total_balance) + Number(amount),
-                available_balance: Number(wallet.available_balance) + Number(amount),
-            },
-            { where: { id: wallet.id }, transaction: t }
-        );
-        if (affected === 0) throw new ConflictError('Conflicto de concurrencia en la billetera, reintentar', 'WALLET_CONCURRENCY_CONFLICT');
-
-        await Transaction_ledger.create({
-            wallet_id: wallet.id,
-            type: 'DEPOSITO',
-            amount,
-            date: new Date()
-        }, { transaction: t });
-
-        await Audit_log.create({
-            user_id: userId,
-            entity: 'wallet',
-            entity_id: wallet.id,
-            action: 'WALLET_CREDIT',
-            detail_json: JSON.stringify({ amount }),
-            date: new Date()
-        }, { transaction: t });
-
-        return await Wallet.findByPk(wallet.id, { transaction: t });
-    });
-
-    emitToUser(userId, 'wallet:update');
-
-    return updatedWallet;
-}
-
-const getMovements = async (userId) => {
-    const wallet = await Wallet.findOne({ where: { user_id: userId } });
-    if (!wallet) throw new NotFoundError('El usuario no tiene billetera', 'WALLET_NOT_FOUND');
-
-    return await Transaction_ledger.findAll({
-        where: { wallet_id: wallet.id },
-        include: [{ model: Auction, attributes: ['title'] }],
-        order: [['date', 'DESC']]
-    });
+const balance = async (req, res) => {
+    const result = await walletsService.checkBalance(req.query.userId);
+    res.status(200).json(toBalanceDto(result));
 };
 
-module.exports = { checkBalance, deposit, getMovements };
+const deposit = async (req, res) => {
+    const { userId, amount } = req.body;
+    const wallet = await walletsService.deposit(userId, amount);
+    res.status(200).json(toWalletDto(wallet));
+};
+
+const movements = async (req, res) => {
+    const result = await walletsService.getMovements(req.query.userId);
+    res.status(200).json(result.map(toMovementDto));
+};
+
+module.exports = { balance, deposit, movements };

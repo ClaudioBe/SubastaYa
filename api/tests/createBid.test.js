@@ -15,7 +15,7 @@ const setup = (overrides = {}) => {
             { id: 1, user_id: 20, total_balance: 5000, available_balance: 5000, withheld_balance: 0 }
         ]
     });
-    const { createBid } = loadWithFakeDb(fake, 'controllers/bidsControllers.js');
+    const { createBid } = loadWithFakeDb(fake, 'services/bidsService.js');
     return { fake, createBid };
 };
 
