@@ -1,6 +1,8 @@
 const express = require('express');
 const routes= require('./routes/index.js');
 const morgan=require('morgan');
+const swaggerUi = require('swagger-ui-express');
+const openapiSpec = require('./docs/openapi.js');
 const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler.js');
 const server = express();
 
@@ -20,6 +22,9 @@ server.use((req, res, next) => {
    
     next();
 });
+
+//documentación OpenAPI interactiva
+server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 
 server.use('/', routes);
 
