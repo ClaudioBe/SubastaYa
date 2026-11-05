@@ -15,6 +15,11 @@ const AuctionRoom = () => {
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
 
+  const bids = [...(auction?.bids || [])].sort((a, b) => Number(b.amount) - Number(a.amount));
+  const highestBid = bids[0];
+  const currentPrice = highestBid ? Number(highestBid.amount) : Number(auction?.base_price);
+  const minAmount = currentPrice + Number(auction?.min_increase);
+
   const fetchAuction = async () => {
     const response = await axios.get(`auctions/${id}`);
     setAuction(response.data);
@@ -45,15 +50,18 @@ const AuctionRoom = () => {
     return () => clearInterval(tickId);
   }, [auction?.end_date]);
 
+  useEffect(() => {
+    if (!auction) return;
+    setAmount(String(minAmount));
+  }, [minAmount, auction]);
+
+
   if (!auction) return <div className="container my-5">Cargando subasta...</div>;
 
-  const bids = [...(auction.bids || [])].sort((a, b) => Number(b.amount) - Number(a.amount));
-  const highestBid = bids[0];
-  const currentPrice = highestBid ? Number(highestBid.amount) : Number(auction.base_price);
-  const minAmount = currentPrice + Number(auction.min_increase);
   const isUpcoming = auction.state === 'PRÓXIMA';
   const isFinished = !isUpcoming && (new Date() > new Date(auction.end_date) || auction.state !== 'ACTIVA');
 
+ 
   const handleBid = async (e) => {
     e.preventDefault();
     setError('');
@@ -125,7 +133,6 @@ const AuctionRoom = () => {
                   value={amount}
                   min={minAmount}
                   step="0.01"
-                  placeholder={minAmount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
               </div>

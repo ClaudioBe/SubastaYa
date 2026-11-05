@@ -45,13 +45,11 @@ const createAuction= async({title,seller_id, category, description, url_image, b
 
     if(Object.keys(errors).length) throw new ValidationError(errors);
 
-    const [categoryData] = await Category.findOrCreate({
-        where: { name: category },
-        defaults: { name: category }
-    })
-    
+    let cat = await Category.findOne({where:{name:category}})
+
+    if(!cat) cat = await Category.create({name:category})
    
-    const createdAuction=await Auction.create({title,seller_id,category_id:categoryData.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'PRÓXIMA'});
+    const createdAuction=await Auction.create({title,seller_id,category_id:cat.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'PRÓXIMA'});
     return createdAuction;
 }
 
