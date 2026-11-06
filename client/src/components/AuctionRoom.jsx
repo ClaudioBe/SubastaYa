@@ -6,6 +6,20 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useSocket } from '../context/SocketContext.jsx';
 import { formatTimeLeft, isEndingToday } from '../utils/time';
 
+const bidStatusBadge = {
+  GANADA: 'bg-success',
+  GANANDO: 'bg-success',
+  PERDIDA: 'bg-secondary',
+  SUPERADO: 'bg-warning text-dark'
+};
+
+const bidStatusLabel = {
+  GANADA: 'Ganada',
+  GANANDO: 'Vas ganando',
+  PERDIDA: 'Perdida',
+  SUPERADO: 'Te superaron'
+};
+
 const AuctionRoom = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -19,6 +33,10 @@ const AuctionRoom = () => {
   const highestBid = bids[0];
   const currentPrice = highestBid ? Number(highestBid.amount) : Number(auction?.base_price);
   const minAmount = currentPrice + Number(auction?.min_increase);
+
+  const userLastBid = user ? bids.find(bid => String(bid.buyer_id) === String(user.id)) : null;
+
+  let calculatedStatus = null;
 
   const fetchAuction = async () => {
     const response = await axios.get(`auctions/${id}`);
@@ -59,6 +77,15 @@ const AuctionRoom = () => {
 
   const isUpcoming = auction.state === 'PRÓXIMA';
   const isFinished = !isUpcoming && (new Date() > new Date(auction.end_date) || auction.state !== 'ACTIVA');
+
+  if (userLastBid) {
+    const isUserHighest = String(highestBid?.buyer_id) === String(user.id);
+    if (isFinished) {
+      calculatedStatus = isUserHighest ? 'GANADA' : 'PERDIDA';
+    } else {
+      calculatedStatus = isUserHighest ? 'GANANDO' : 'SUPERADO';
+    }
+  }
 
   const handleBid = async (e) => {
     e.preventDefault();
@@ -101,14 +128,15 @@ const AuctionRoom = () => {
           <p className="text-muted">{auction.description}</p>
           <p className="mb-1">Vendedor: <strong>{auction.user?.name}</strong></p>
 
-          <div className="d-flex align-items-center gap-3 my-3">
+          <div className="p-3 bg-light rounded border d-flex justify-content-between align-items-center mb-4 shadow-sm">
             <div>
               <div className="text-muted small">{highestBid ? 'Puja actual' : 'Precio base'}</div>
-              <div className="fs-3 fw-bold" style={{ color: 'var(--accent-hover)' }}>$ {currentPrice}</div>
+              {calculatedStatus && (<span className={`badge ${bidStatusBadge[calculatedStatus]}`}>{bidStatusLabel[calculatedStatus]}</span>)}
+              <div className="fs-2 fw-bold" style={{ color: 'var(--accent-hover)' }}>$ {currentPrice}</div>
             </div>
             <div>
               <div className="text-muted small">Tiempo restante</div>
-              <div className={`fs-5 fw-bold ${isFinished ? 'text-danger' : ''}`}>
+              <div className={`fs-3 fw-bold ${isFinished ? 'text-danger' : ''}`}>
                 {isUpcoming ? 'PRÓXIMAMENTE' : isFinished ? 'FINALIZADA' : timeLeft}
               </div>
             </div>
@@ -121,7 +149,7 @@ const AuctionRoom = () => {
           ) : !user ? (
             <div className="alert alert-secondary">Iniciá sesión para poder pujar.</div>
           ) : (
-            <form onSubmit={handleBid} className="border rounded p-3">
+            <form onSubmit={handleBid} className="border border-2 rounded-3 p-4 shadow-sm bg-light">
               <p className="mb-2 text-muted small">Pujando como: <strong>{user.name}</strong></p>
               <div className="mb-2">
                 <label className="form-label">Monto a pujar (mínimo $ {minAmount})</label>
@@ -147,6 +175,15 @@ const AuctionRoom = () => {
                 <li key={bid.id} className="list-group-item d-flex justify-content-between">
                   <span>{bid.user?.name || `Usuario ${bid.buyer_id}`}</span>
                   <strong>$ {bid.amount}</strong>
+                  <span>
+                    {new Date(bid.bid_date).toLocaleString('es-AR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
                 </li>
               ))}
             </ul>
