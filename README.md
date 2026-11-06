@@ -56,6 +56,8 @@ createdb -U postgres subastaya
 
 (o desde `psql`: `CREATE DATABASE subastaya;`)
 
+> En Windows, `createdb` y `psql` suelen no estar en el PATH. Están en `C:\Program Files\PostgreSQL\<versión>\bin` (por ejemplo, `& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres`), o podés crear la base desde pgAdmin.
+
 ## 4. Ejecutar las migraciones
 
 El esquema de la base se genera **exclusivamente** a partir de las migraciones en `api/migrations/` — no hay ningún `sync()` automático. Desde `api/`:
@@ -71,6 +73,10 @@ Para tener datos de prueba (usuarios, categorías y subastas de ejemplo — ver 
 ```bash
 npx sequelize-cli db:seed:all
 ```
+
+El último seeder (`reset-id-sequences`) alinea los contadores de ids de PostgreSQL con los datos sembrados. Es intencional: los seeders insertan filas con id fijo, y sin ese paso las primeras altas hechas desde la API (usuarios, subastas, pujas) chocarían con esos ids y fallarían.
+
+> El seed depende del tiempo: las fechas de las subastas son relativas al momento de sembrar. Levantá el backend enseguida después de correrlo, porque el worker procesa las subastas vencidas apenas arranca (la "activa crítica" cierra a los 30 segundos y, si nadie puja, pasa a `DESIERTA`).
 
 ## 5. Lanzar la aplicación
 
@@ -142,7 +148,7 @@ Al correr `npx sequelize-cli db:seed:all` quedan cargados los siguientes usuario
 | Usuario | Rol en las pruebas | Total | Retenido | Disponible |
 |---|---|---|---|---|
 | `vendedor@test.com` | Vendedor de las subastas de ejemplo | $0 | $0 | $0 |
-| `comprador1@test.com` | Postor líder activo | $150.000 | $45.000 | $105.000 |
+| `comprador1@test.com` | Postor líder activo | $150.000 | $90.000 | $60.000 |
 | `comprador2@test.com` | Postor habilitado | $200.000 | $0 | $200.000 |
 | `sinfondos@test.com` | Cuenta para probar validación de saldo insuficiente | $500 | $0 | $500 |
 
@@ -151,7 +157,7 @@ Al correr `npx sequelize-cli db:seed:all` quedan cargados los siguientes usuario
 1. **Activa estándar** — cierra en ~25 minutos, con 2 pujas previas (líder actual: `comprador1`, $45.000).
 2. **Activa crítica** — cierra en ~30 segundos, para probar la extensión de tiempo por anti-sniping.
 3. **Próxima** — programada para iniciar en 24hs (las pujas deben estar bloqueadas hasta que el worker la active).
-4. **Vencida con ganador** — fecha límite ya superada, con puja registrada, para validar la liquidación del worker.
+4. **Vencida con ganador** — fecha límite ya superada, con una puja de `comprador1` por $45.000, para validar la liquidación del worker. Por eso `comprador1` arranca con $90.000 retenidos: $45.000 por liderar la subasta 1 y otros $45.000 por esta puja. Tras la liquidación quedan $105.000 de total, $45.000 retenidos y $60.000 disponibles.
 5. **Vencida desierta** — finalizada sin ninguna oferta, para comprobar el pase automático a `DESIERTA`.
 
 ## Prueba de concurrencia (stress test)

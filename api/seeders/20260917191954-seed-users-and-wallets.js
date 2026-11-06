@@ -10,10 +10,11 @@ module.exports = {
       { id: 4, email: 'sinfondos@test.com', name: 'Usuario Sin Fondos', password: '12345',  }
     ], {});
 
-    //billeteras vinculadas con los usuarios
+    //billeteras vinculadas con los usuarios (comprador1 retiene 45.000 por liderar la subasta 1 y otros 45.000 por su puja en la subasta 4,
+    //que el worker liquida al arrancar)
     await queryInterface.bulkInsert('wallets', [
       { user_id: 1, total_balance: 0.00, withheld_balance: 0.00, available_balance: 0.00, version: 0,  },
-      { user_id: 2, total_balance: 150000.00, withheld_balance: 45000.00, available_balance: 105000.00, version: 0,  },
+      { user_id: 2, total_balance: 150000.00, withheld_balance: 90000.00, available_balance: 60000.00, version: 0,  },
       { user_id: 3, total_balance: 200000.00, withheld_balance: 0.00, available_balance: 200000.00, version: 0,  },
       { user_id: 4, total_balance: 500.00, withheld_balance: 0.00, available_balance: 500.00, version: 0,  }
     ], {});
