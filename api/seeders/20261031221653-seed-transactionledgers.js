@@ -44,6 +44,13 @@ module.exports = {
         date: new Date(),
         auction_id: 1
       },
+      {
+        wallet_id: 2,
+        type: 'RETENCION',
+        amount: 45000.00,
+        date: new Date(),
+        auction_id: 4
+      },
     ], {});
   },
 

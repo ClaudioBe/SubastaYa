@@ -107,6 +107,15 @@ test('el vendedor no puede pujar en su propia subasta', async () => {
     await assert.rejects(createBid(1, 10, 1500), { code: 'SELLER_CANNOT_BID' });
 });
 
+test('el vendedor no puede pujar aunque seller_id llegue como string y buyerId como número', async () => {
+    const { createBid } = setup({
+        auction: { seller_id: '10' },
+        wallets: [{ id: 1, user_id: 10, total_balance: 5000, available_balance: 5000, withheld_balance: 0 }]
+    });
+
+    await assert.rejects(createBid(1, 10, 1500), { code: 'SELLER_CANNOT_BID' });
+});
+
 test('subasta no activa o vencida: se rechaza', async () => {
     const closed = setup({ auction: { state: 'FINALIZADA' } });
     await assert.rejects(closed.createBid(1, 20, 1500), { code: 'AUCTION_NOT_ACTIVE' });

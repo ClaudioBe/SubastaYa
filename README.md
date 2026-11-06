@@ -56,6 +56,8 @@ createdb -U postgres subastaya
 
 (o desde `psql`: `CREATE DATABASE subastaya;`)
 
+> En Windows, `createdb` y `psql` suelen no estar en el PATH. Están en `C:\Program Files\PostgreSQL\<versión>\bin` (por ejemplo, `& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres`), o podés crear la base desde pgAdmin.
+
 ## 4. Ejecutar las migraciones
 
 El esquema de la base se genera **exclusivamente** a partir de las migraciones en `api/migrations/` — no hay ningún `sync()` automático. Desde `api/`:
@@ -71,6 +73,10 @@ Para tener datos de prueba (usuarios, categorías y subastas de ejemplo — ver 
 ```bash
 npx sequelize-cli db:seed:all
 ```
+
+El último seeder (`reset-id-sequences`) alinea los contadores de ids de PostgreSQL con los datos sembrados. Es intencional: los seeders insertan filas con id fijo, y sin ese paso las primeras altas hechas desde la API (usuarios, subastas, pujas) chocarían con esos ids y fallarían.
+
+> El seed depende del tiempo: las fechas de las subastas son relativas al momento de sembrar. Levantá el backend enseguida después de correrlo, porque el worker procesa las subastas vencidas apenas arranca (la "activa crítica" cierra a los 30 segundos y, si nadie puja, pasa a `DESIERTA`).
 
 ## 5. Lanzar la aplicación
 
@@ -104,6 +110,7 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | Comando | Dónde | Qué hace |
 |---|---|---|
 | `npm start` | `api/` | Levanta el backend con recarga automática (nodemon) |
+| `npm test` | `api/` | Corre los tests automatizados (`node --test`, sin necesidad de base de datos) |
 | `npm run dev` | `client/` | Levanta el frontend en modo desarrollo (Vite) |
 | `npm run build` | `client/` | Compila el frontend para producción |
 | `npx sequelize-cli db:migrate` | `api/` | Aplica las migraciones pendientes |
@@ -116,6 +123,21 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 - **Transaccionalidad**: las operaciones críticas (retención/liberación de saldo, liquidación de subastas) corren dentro de transacciones de Sequelize — si algún paso falla, se revierte todo el conjunto de cambios.
 - **Worker en segundo plano**: un proceso (`api/src/workers/auctionSettlementWorker.js`) corre cada 30 segundos por defecto (ajustable con `AUCTION_WORKER_INTERVAL_MS`) y se encarga de: activar subastas `PRÓXIMA` cuya fecha de inicio ya llegó, y liquidar subastas `ACTIVA` cuya fecha de fin ya pasó (`FINALIZADA` con transferencia de saldo si hubo pujas, o `DESIERTA` si no hubo ninguna).
 - **Auditoría**: cada cambio de estado ejecutado por el worker, cada extensión por anti-sniping y cada puja rechazada quedan registrados en `audit_logs`.
+- **Capas del backend**: `routes` (solo asocian rutas) → `controllers` (leen la petición y responden) → `services` (lógica de negocio y acceso a los modelos). Las respuestas se arman con los DTOs de `api/src/dtos`, por lo que nunca se exponen instancias de Sequelize ni campos internos como `version` o `password`.
+- **Errores**: todos los errores tienen el formato `{ error, message, fields? }`. Códigos HTTP: `400` datos inválidos (`fields` trae el mensaje por campo), `401` credenciales incorrectas, `404` recurso inexistente, `409` conflicto (por ejemplo, concurrencia sobre la billetera), `422` regla de negocio incumplida (`BID_TOO_LOW`, `INSUFFICIENT_FUNDS`, `AUCTION_NOT_ACTIVE`, `SELLER_CANNOT_BID`, `AUCTION_ENDED`) y `500` error inesperado, sin detalles internos.
+
+## Documentación de la API (Swagger)
+
+Con el backend corriendo, la documentación interactiva de los endpoints está en [http://localhost:3001/api-docs](http://localhost:3001/api-docs) (ajustá el puerto si cambiaste `PORT`). Desde ahí se puede ejecutar cada endpoint. La especificación OpenAPI vive en `api/src/docs/openapi.js`.
+
+## Tests
+
+```bash
+cd api
+npm test
+```
+
+Cubren las pujas (`createBid`), la liquidación de subastas (`settleAuction`) y los DTOs. Son tests unitarios que reemplazan la base de datos por una simulada en memoria (`api/tests/helpers/fakeDb.js`): validan la lógica de negocio, pero **no** el SQL, las transacciones reales ni la concurrencia, que se prueban con el [stress test](#prueba-de-concurrencia-stress-test).
 
 ## Datos semilla para pruebas
 
@@ -126,7 +148,7 @@ Al correr `npx sequelize-cli db:seed:all` quedan cargados los siguientes usuario
 | Usuario | Rol en las pruebas | Total | Retenido | Disponible |
 |---|---|---|---|---|
 | `vendedor@test.com` | Vendedor de las subastas de ejemplo | $0 | $0 | $0 |
-| `comprador1@test.com` | Postor líder activo | $150.000 | $45.000 | $105.000 |
+| `comprador1@test.com` | Postor líder activo | $150.000 | $90.000 | $60.000 |
 | `comprador2@test.com` | Postor habilitado | $200.000 | $0 | $200.000 |
 | `sinfondos@test.com` | Cuenta para probar validación de saldo insuficiente | $500 | $0 | $500 |
 
@@ -135,7 +157,7 @@ Al correr `npx sequelize-cli db:seed:all` quedan cargados los siguientes usuario
 1. **Activa estándar** — cierra en ~25 minutos, con 2 pujas previas (líder actual: `comprador1`, $45.000).
 2. **Activa crítica** — cierra en ~30 segundos, para probar la extensión de tiempo por anti-sniping.
 3. **Próxima** — programada para iniciar en 24hs (las pujas deben estar bloqueadas hasta que el worker la active).
-4. **Vencida con ganador** — fecha límite ya superada, con puja registrada, para validar la liquidación del worker.
+4. **Vencida con ganador** — fecha límite ya superada, con una puja de `comprador1` por $45.000, para validar la liquidación del worker. Por eso `comprador1` arranca con $90.000 retenidos: $45.000 por liderar la subasta 1 y otros $45.000 por esta puja. Tras la liquidación quedan $105.000 de total, $45.000 retenidos y $60.000 disponibles.
 5. **Vencida desierta** — finalizada sin ninguna oferta, para comprobar el pase automático a `DESIERTA`.
 
 ## Prueba de concurrencia (stress test)
@@ -176,4 +198,4 @@ wait
 bash stress-test-concurrencia.sh
 ```
 
-Resultado esperado: una de las dos respuestas devuelve `HTTP 200` (puja aceptada) y la otra `HTTP 400` (rechazada por validación de monto, porque la primera ya movió el precio) o `HTTP 409` (si el rechazo ocurre específicamente por un conflicto de concurrencia sobre la billetera). Nunca deberían aceptarse las dos.
+Resultado esperado: una de las dos respuestas devuelve `HTTP 201` (puja aceptada) y la otra `HTTP 422` con `BID_TOO_LOW` (rechazada por validación de monto, porque la primera ya movió el precio) o `HTTP 409` (si el rechazo ocurre específicamente por un conflicto de concurrencia sobre la billetera). Nunca deberían aceptarse las dos.

@@ -12,7 +12,8 @@ const createBid = async (auctionId, buyerId, amount) => {
             if (!auction) throw new NotFoundError('Subasta no encontrada', 'AUCTION_NOT_FOUND');
             if (auction.state !== 'ACTIVA') throw new BusinessError('La subasta no está activa', 'AUCTION_NOT_ACTIVE');
 
-            if (auction.seller_id === buyerId) {
+            //seller_id (BIGINT) llega como string desde la base y buyerId puede venir como número o string
+            if (String(auction.seller_id) === String(buyerId)) {
                 throw new BusinessError('Un vendedor no puede realizar ofertas en su propia subasta', 'SELLER_CANNOT_BID');
             }
 
