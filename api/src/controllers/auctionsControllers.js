@@ -1,135 +1,32 @@
-const {Auction, Category, User, Bid} = require('../db')
-const { Op } = require('sequelize');
-const { ValidationError, NotFoundError } = require('../utils/errors');
+const auctionsService = require('../services/auctionsService');
+const bidsService = require('../services/bidsService');
+const { toAuctionDto, toAuctionDetailDto, toBidDto } = require('../dtos');
 
-//para poder validar si el usuario ingresó una url valida
-const regexURL = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i;
-
-
-
-const createAuction= async({title,seller_id, category, description, url_image, base_price, min_increase, start_date, start_time, end_date, end_time})=>{
-    const errors={};
-    let startDate;
-    if(title=="") errors.title="Debe ingresar un título!";
-   
-    if(description=="") errors.description="Debe ingresar una descripción!";
-    else if(description.length<5) errors.description="Descripción muy breve!";
-    if(category=="") errors.category="Debe ingresar o elegir una categoría!";
-
-    if(start_date=="") errors.start_date="Debe elegir una fecha de inicio!";
-    else{
-        startDate = new Date(`${start_date}T${start_time}:00`);
-        if(startDate<=new Date()) errors.start_time="Debe seleccionar un horario posterior al actual!"
-    }
-
-    if(end_date=="") errors.end_date="Debe elegir una fecha de finalización!";
-
-    if(start_time=="") errors.start_time="Debe elegir un horario de inicio!";
-    
-    if(end_time=="") errors.end_time="Debe elegir un horario de finalización!";
-
-    if(base_price===""||base_price==null) errors.base_price="Debe ingresar un precio base!";
-    else if(!(Number(base_price)>0)) errors.base_price="El precio base debe ser mayor a 0!";
-    if(min_increase===""||min_increase==null) errors.min_increase="Debe ingresar un incremento mínimo!";
-    else if(!(Number(min_increase)>0)) errors.min_increase="El incremento mínimo debe ser mayor a 0!";
-
-    if(url_image=="") errors.url_image="Debe ingresar una url de imagen!";
-    else if(!regexURL.test(url_image)) errors.url_image="Debe ingresar una url válida!";
-    
-    //la fecha de fin debe ser posterior a la de inicio (solo si ambas fechas son válidas)
-    const endDate= new Date(`${end_date}T${end_time}:00`);
-    if(end_date!==""&&end_time!==""&&!errors.start_date&&!errors.start_time){
-        if(isNaN(endDate.getTime())||isNaN(startDate?.getTime())) errors.end_date="Fecha u horario inválido!";
-        else if(endDate<=startDate) errors.end_date="La fecha de finalización debe ser posterior a la de inicio!";
-    }
-
-    if(Object.keys(errors).length) throw new ValidationError(errors);
-
-    let cat = await Category.findOne({where:{name:category}})
-
-    if(!cat) cat = await Category.create({name:category})
-   
-    const createdAuction=await Auction.create({title,seller_id,category_id:cat.id, description, url_image, base_price, min_increase,start_date: startDate, end_date:endDate, state:'PRÓXIMA'});
-    return createdAuction;
-}
-
-const getAllAuctions=async({ search, sellerId, category, state, minPrice, maxPrice, sort } = {})=>{
-
-    const include = [{ model: Category, attributes: ['name'] }, { model: Bid }];
-    const now = new Date();
-    const and = [];
-
-    if (sellerId) and.push({ seller_id: sellerId });
-
-    if (search) {
-        and.push({
-            [Op.or]: [
-                { title: { [Op.iLike]: `%${search}%` } },
-                { '$category.name$': { [Op.iLike]: `%${search}%` } }
-            ]
-        });
-    }
-
-    if (category) and.push({ '$category.name$': category });
-
-    //Estado: PRÓXIMA/ACTIVA/FINALIZADA/DESIERTA son estados reales, salvo el caso ACTIVA-vencida-sin-procesar
-    //todavía por el worker (margen de hasta AUCTION_WORKER_INTERVAL_MS), que tratamos como finalizada.
-    if (state === 'ACTIVA') {
-        and.push({ state: 'ACTIVA' }, { end_date: { [Op.gt]: now } });
-    } else if (state === 'PROXIMA') {
-        and.push({ state: 'PRÓXIMA' });
-    } else if (state === 'FINALIZADA') {
-        and.push({
-            [Op.or]: [
-                { state: { [Op.in]: ['FINALIZADA', 'DESIERTA'] } },
-                { state: 'ACTIVA', end_date: { [Op.lte]: now } }
-            ]
-        });
-    }
-
-    const where = and.length ? { [Op.and]: and } : {};
-
-    const auctions = await Auction.findAll({ include, where });
-
-    //Precio actual = puja más alta, o el precio base si todavía no tiene pujas
-    let results = auctions.map(a => {
-        const json = a.toJSON();
-        const highestAmount = json.bids.length ? Math.max(...json.bids.map(b => Number(b.amount))) : null;
-        return { ...json, currentPrice: highestAmount ?? Number(json.base_price) };
-    });
-
-    if (minPrice) results = results.filter(a => a.currentPrice >= Number(minPrice));
-    if (maxPrice) results = results.filter(a => a.currentPrice <= Number(maxPrice));
-
-    if (sort === 'time_asc') {
-        results = results.sort((a, b) => new Date(a.end_date) - new Date(b.end_date));
-    } else if (sort === 'bids_desc') {
-        results = results.sort((a, b) => b.currentPrice - a.currentPrice);
-    }
-
-    return results;
+//Capa HTTP: lee la petición, delega en el servicio y responde con DTOs
+const create = async (req, res) => {
+    const auction = await auctionsService.createAuction(req.body);
+    res.status(201).json(toAuctionDto(auction));
 };
 
-const getAuctionById=async(id)=>{
-    const auction=await Auction.findByPk(id, {
-        include: [
-            { model: Category, attributes: ['name'] },
-            { model: User, attributes: ['id', 'name'] },
-            { model: Bid, attributes: ['id', 'amount', 'bid_date', 'buyer_id'], include: [{ model: User, attributes: ['id', 'name'] }] }
-        ]
-    });
-    if (!auction) throw new NotFoundError('Subasta no encontrada', 'AUCTION_NOT_FOUND');
-    return auction;
-}
+const list = async (req, res) => {
+    const { search, sellerId, category, state, minPrice, maxPrice, sort } = req.query;
+    const auctions = await auctionsService.getAllAuctions({ search, sellerId, category, state, minPrice, maxPrice, sort });
+    res.status(200).json(auctions.map(toAuctionDetailDto));
+};
 
-const getAllCategoryNames=async()=>{
-    const categories = await Category.findAll({
-        attributes: ['name'],
-        order: [['name', 'ASC']]
-    });
-    const categoryNames = categories.map(c => c.name);
-    
-    return categoryNames?categoryNames:[];
-}
+const listCategories = async (req, res) => {
+    res.status(200).json(await auctionsService.getAllCategoryNames());
+};
 
-module.exports={createAuction,getAllAuctions,getAuctionById,getAllCategoryNames};
+const getById = async (req, res) => {
+    const auction = await auctionsService.getAuctionById(req.params.id);
+    res.status(200).json(toAuctionDetailDto(auction));
+};
+
+const placeBid = async (req, res) => {
+    const { buyerId, amount } = req.body;
+    const bid = await bidsService.createBid(req.params.id, buyerId, amount);
+    res.status(201).json(toBidDto(bid));
+};
+
+module.exports = { create, list, listCategories, getById, placeBid };

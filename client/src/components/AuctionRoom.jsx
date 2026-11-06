@@ -51,17 +51,15 @@ const AuctionRoom = () => {
   }, [auction?.end_date]);
 
   useEffect(() => {
-    if (!auction) return;
+    if (Number.isNaN(minAmount)) return;
     setAmount(String(minAmount));
-  }, [minAmount, auction]);
-
+  }, [minAmount]);
 
   if (!auction) return <div className="container my-5">Cargando subasta...</div>;
 
   const isUpcoming = auction.state === 'PRÓXIMA';
   const isFinished = !isUpcoming && (new Date() > new Date(auction.end_date) || auction.state !== 'ACTIVA');
 
- 
   const handleBid = async (e) => {
     e.preventDefault();
     setError('');
